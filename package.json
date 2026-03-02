@@ -4,9 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "nodemon index.js",
-    "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "dev": "nodemon index.js"
   },
   "keywords": [],
   "author": "",
@@ -26,11 +24,5 @@
     "mongoose": "^9.2.3",
     "multer": "^2.1.0",
     "nodemailer": "^8.0.1"
-  },
-  "devDependencies": {
-    "eslint": "^10.0.2",
-    "eslint-config-prettier": "^10.1.8",
-    "eslint-plugin-prettier": "^5.5.5",
-    "prettier": "^3.8.1"
   }
 }
