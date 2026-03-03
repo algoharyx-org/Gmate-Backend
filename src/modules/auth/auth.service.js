@@ -69,3 +69,21 @@ export const updateProfileService = async (userId, data) => {
   user.password = undefined;
   return user;
 }
+
+export const changeUserPasswordService = async (userId, data) => {
+  const user = await User.findById(userId).select('+password');
+  if (!user) {
+    throw createNotFoundError("User not found");
+  }
+
+  const isMatch = await user.comparePassword(data.oldPassword);
+  if (!isMatch) {
+    throw createUnauthorizedError("Invalid old password");
+  }
+
+  user.password = data.newPassword;
+  await user.save();
+
+  user.password = undefined;
+  return user;
+}

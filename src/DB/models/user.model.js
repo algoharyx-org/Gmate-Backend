@@ -32,7 +32,6 @@ const userSchema = new mongoose.Schema(
     },
     active: { type: Boolean, default: true },
     resetCode: { type: String, select: false },
-    passwordChangedAt: { type: Date, select: false },
     resetCodeExpireTime: { type: Date, select: false },
     resetCodeVerify: { type: Boolean, select: false },
   },
