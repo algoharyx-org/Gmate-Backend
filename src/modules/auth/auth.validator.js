@@ -34,3 +34,22 @@ export const changePasswordValidation = Joi.object({
     confirmNewPassword: Joi.string().min(8).pattern(passwordRegex).required().valid(Joi.ref("newPassword")),
   }).required(),
 });
+
+export const forgotPasswordValidation = Joi.object({
+  body: Joi.object({
+    email: Joi.string().email().lowercase().trim().required(),
+  }).required(),
+});
+
+export const verifyResetPasswordCodeValidation = Joi.object({
+  body: Joi.object({
+    resetCode: Joi.string().required(),
+  }).required(),
+});
+
+export const resetPasswordValidation = Joi.object({
+  body: Joi.object({
+    password: Joi.string().min(8).pattern(passwordRegex).required(),
+    confirmPassword: Joi.string().min(8).pattern(passwordRegex).required().valid(Joi.ref("password")),
+  }).required(),
+});

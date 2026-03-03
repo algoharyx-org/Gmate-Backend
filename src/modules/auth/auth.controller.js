@@ -1,6 +1,7 @@
 import expressAsyncHandler from "express-async-handler";
-import { changeUserPasswordService, getCurrentUserService, loginService, registerService, updateProfileService, verifyRefreshToken } from "./auth.service.js";
+import { changeUserPasswordService, forgotPasswordService, getCurrentUserService, loginService, registerService, resetPasswordService, updateProfileService, verifyRefreshToken, verifyResetPasswordCodeService } from "./auth.service.js";
 import { createResponse, successResponse } from "../../utils/APIResponse.js";
+import { config } from "../../config/env.js";
 
 // @desc     Register
 // @route    POST /auth/register
@@ -10,14 +11,14 @@ export const register = expressAsyncHandler(async (req, res) => {
 
   res.cookie('accessToken', accessToken, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
+    secure: config.nodeEnv === 'production',
     sameSite: 'strict',
     maxAge: 60 * 60 * 1000,
   });
 
   res.cookie('refreshToken', refreshToken, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
+    secure: config.nodeEnv === 'production',
     sameSite: 'strict',
     maxAge: 7 * 24 * 60 * 60 * 1000,
   });
@@ -33,14 +34,14 @@ export const login = expressAsyncHandler(async (req, res) => {
 
   res.cookie('accessToken', accessToken, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
+    secure: config.nodeEnv === 'production',
     sameSite: 'strict',
     maxAge: 60 * 60 * 1000,
   });
 
   res.cookie('refreshToken', refreshToken, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
+    secure: config.nodeEnv === 'production',
     sameSite: 'strict',
     maxAge: 7 * 24 * 60 * 60 * 1000,
   });
@@ -57,7 +58,7 @@ export const createAccessToken = expressAsyncHandler(async (req, res) => {
 
   res.cookie('accessToken', accessToken, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
+    secure: config.nodeEnv === 'production',
     sameSite: 'strict',
     maxAge: 60 * 60 * 1000,
   });
@@ -95,4 +96,38 @@ export const updateProfile = expressAsyncHandler(async (req, res) => {
 export const changeUserPassword = expressAsyncHandler(async (req, res) => {
   const user = await changeUserPasswordService(req.userId, req.body);
   res.status(200).json(successResponse(user, "Password changed successfully"));
+})
+
+// @desc     Forgot password
+// @route    POST /auth/forgotPassword
+// @access   Public
+export const forgotPassword = expressAsyncHandler(async (req, res) => {
+  const resetToken = await forgotPasswordService(req.body.email);
+  res.cookie('resetToken', resetToken, {
+    httpOnly: true,
+    secure: config.nodeEnv === 'production',
+    sameSite: 'strict',
+    maxAge: 10 * 60 * 1000,
+  });
+  res.status(200).json(successResponse(resetToken, "Reset password code sent to your email"));
+})
+
+// @desc     Verify reset password code
+// @route    POST /auth/verifyResetPasswordCode
+// @access   Private
+export const verifyResetPasswordCode = expressAsyncHandler(async (req, res) => {
+  const resetToken = req.cookies?.resetToken || req.headers.authorization?.replace('Bearer ', '');
+  const resetCode = req.body.resetCode;
+  await verifyResetPasswordCodeService(resetToken, resetCode);
+  res.status(200).json(successResponse({}, "Reset password code verified successfully"));
+})
+
+// @desc     Reset password
+// @route    POST /auth/resetPassword
+// @access   Private
+export const resetPassword = expressAsyncHandler(async (req, res) => {
+  const resetToken = req.cookies?.resetToken || req.headers.authorization?.replace('Bearer ', '');
+  const password = req.body.password;
+  await resetPasswordService(resetToken, password);
+  res.status(200).json(successResponse({}, "Password reset successfully"));
 })
