@@ -1,5 +1,5 @@
 import expressAsyncHandler from "express-async-handler";
-import { loginService, registerService, verifyRefreshToken } from "./auth.service.js";
+import { getCurrentUserService, loginService, registerService, updateProfileService, verifyRefreshToken } from "./auth.service.js";
 import { createResponse, successResponse } from "../../utils/APIResponse.js";
 
 // @desc     Register
@@ -71,4 +71,20 @@ export const logout = expressAsyncHandler(async (req, res) => {
   res.clearCookie('accessToken');
   res.clearCookie('refreshToken');
   res.status(200).json(successResponse({}, "Logout successfully"));
+});
+
+// @desc     Get current user
+// @route    POST /auth/me
+// @access   Private
+export const getCurrentUser = expressAsyncHandler(async (req, res) => {
+  const user = await getCurrentUserService(req.userId);
+  res.status(200).json(successResponse(user, "User retrieved successfully"));
+});
+
+// @desc     Update current user
+// @route    POST /auth/updateProfile
+// @access   Private
+export const updateProfile = expressAsyncHandler(async (req, res) => {
+  const user = await updateProfileService(req.userId, req.body);
+  res.status(200).json(successResponse(user, "User updated successfully"));
 });

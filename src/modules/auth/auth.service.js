@@ -1,5 +1,5 @@
 import User from "../../DB/models/user.model.js";
-import { createConflictError, createUnauthorizedError } from "../../utils/APIErrors.js";
+import { createConflictError, createNotFoundError, createUnauthorizedError } from "../../utils/APIErrors.js";
 import { generateAccessToken, generateRefreshToken, verifyToken } from "../../utils/tokens.js";
 
 export const registerService = async (userData) => {
@@ -44,4 +44,28 @@ export const verifyRefreshToken = async (refreshToken) => {
   const accessToken = generateAccessToken({_id: decoded._id, role: decoded.role});
   
   return accessToken;
+}
+
+export const getCurrentUserService = async (userId) => {
+  const user = await User.findById(userId).select('-password');
+  if (!user) {
+    throw createNotFoundError("User not found");
+  }
+  return user;
+}
+
+export const updateProfileService = async (userId, data) => {
+  delete data.password;
+  delete data.confirmPassword;
+  delete data.role;
+  delete data.active;
+
+  const user = await User.findByIdAndUpdate(userId, data, { new: true });
+
+  if (!user) {
+    throw createNotFoundError("User not found");
+  }
+
+  user.password = undefined;
+  return user;
 }

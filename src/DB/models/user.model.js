@@ -30,7 +30,7 @@ const userSchema = new mongoose.Schema(
       enum: ['user', 'admin'],
       default: 'user',
     },
-    active: { type: Boolean, default: false },
+    active: { type: Boolean, default: true },
     resetCode: { type: String, select: false },
     passwordChangedAt: { type: Date, select: false },
     resetCodeExpireTime: { type: Date, select: false },
