@@ -75,7 +75,7 @@ export const logout = expressAsyncHandler(async (req, res) => {
 });
 
 // @desc     Get current user
-// @route    POST /auth/me
+// @route    GET /auth/me
 // @access   Private
 export const getCurrentUser = expressAsyncHandler(async (req, res) => {
   const user = await getCurrentUserService(req.userId);
@@ -83,7 +83,7 @@ export const getCurrentUser = expressAsyncHandler(async (req, res) => {
 });
 
 // @desc     Update current user
-// @route    POST /auth/updateProfile
+// @route    PUT /auth/updateProfile
 // @access   Private
 export const updateProfile = expressAsyncHandler(async (req, res) => {
   const user = await updateProfileService(req.userId, req.body);
@@ -91,7 +91,7 @@ export const updateProfile = expressAsyncHandler(async (req, res) => {
 });
 
 // @desc     Change current user password
-// @route    POST /auth/changePassword
+// @route    PUT /auth/changePassword
 // @access   Private
 export const changeUserPassword = expressAsyncHandler(async (req, res) => {
   const user = await changeUserPasswordService(req.userId, req.body);
@@ -123,7 +123,7 @@ export const verifyResetPasswordCode = expressAsyncHandler(async (req, res) => {
 })
 
 // @desc     Reset password
-// @route    POST /auth/resetPassword
+// @route    PUT /auth/resetPassword
 // @access   Private
 export const resetPassword = expressAsyncHandler(async (req, res) => {
   const resetToken = req.cookies?.resetToken || req.headers.authorization?.replace('Bearer ', '');
