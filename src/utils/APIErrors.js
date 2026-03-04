@@ -1,31 +1,33 @@
-import { HTTP_STATUS } from "../config/constants"
+import { HTTP_STATUS } from '../config/constants.js';
 
 export class ApiError extends Error {
-  constructor(statusCode, message, isOperational = true,
-    stack = ""
-  ) {
-    super(message)
-    this.statusCode = statusCode
-    this.isOperational = isOperational
-    this.success = false
+  constructor(statusCode, message, isOperational = true, stack = '') {
+    super(message);
+    this.statusCode = statusCode;
+    this.isOperational = isOperational;
+    this.success = false;
 
     if (stack) {
-      this.stack = stack
+      this.stack = stack;
     } else {
-      Error.captureStackTrace(this, this.constructor)
+      Error.captureStackTrace(this, this.constructor);
     }
   }
 }
 
-export const createBadRequestError = (message = "bad request") => {
-  return new ApiError(HTTP_STATUS.BAD_REQUEST, message)
-}
+export const createBadRequestError = (message = 'bad request') => {
+  return new ApiError(HTTP_STATUS.BAD_REQUEST, message);
+};
 
-export const createUnauthorizedError = (message = 'Unauthorized - Please login') => {
+export const createUnauthorizedError = (
+  message = 'Unauthorized - Please login',
+) => {
   return new ApiError(HTTP_STATUS.UNAUTHORIZED, message);
 };
 
-export const createForbiddenError = (message = 'Forbidden - You don\'t have permission') => {
+export const createForbiddenError = (
+  message = "Forbidden - You don't have permission",
+) => {
   return new ApiError(HTTP_STATUS.FORBIDDEN, message);
 };
 
