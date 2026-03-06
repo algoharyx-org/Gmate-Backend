@@ -3,13 +3,13 @@ import { config } from "../config/env.js";
 
 export const errorHandler = (err, req, res, next) => {
   let statusCode = err.statusCode || HTTP_STATUS.INTERNAL_SERVER_ERROR;
-  let message = err.message || 'Internal Server Error';
+  let message = err.message || "Internal Server Error";
 
-  if (err.name === 'ValidationError') {
+  if (err.name === "ValidationError") {
     statusCode = HTTP_STATUS.BAD_REQUEST;
-    message = Object.values((err).errors)
+    message = Object.values(err.errors)
       .map((e) => e.message)
-      .join(', ');
+      .join(", ");
   }
 
   if (err.code === 11000) {
@@ -18,23 +18,23 @@ export const errorHandler = (err, req, res, next) => {
     message = `${field} already exists`;
   }
 
-  if (err.name === 'CastError') {
+  if (err.name === "CastError") {
     statusCode = HTTP_STATUS.NOT_FOUND;
-    message = 'Invalid ID format';
+    message = "Invalid ID format";
   }
 
-  if (err.name === 'JsonWebTokenError') {
+  if (err.name === "JsonWebTokenError") {
     statusCode = HTTP_STATUS.UNAUTHORIZED;
-    message = 'Invalid token';
+    message = "Invalid token";
   }
 
-  if (err.name === 'TokenExpiredError') {
+  if (err.name === "TokenExpiredError") {
     statusCode = HTTP_STATUS.UNAUTHORIZED;
-    message = 'Token expired';
+    message = "Token expired";
   }
 
   res.status(statusCode).json({
     error: message,
-    ...(config.nodeEnv === 'development' && { stack: err.stack }),
+    ...(config.nodeEnv === "development" && { stack: err.stack }),
   });
 };

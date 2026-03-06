@@ -3,57 +3,43 @@ import User from "../../DB/models/user.model.js";
 // post adduser
 
 export const adduser = async (userData) => {
+  const user = await User.create(userData);
+  return user;
+};
 
-    
-         const user = await User.create(userData)
-         return user;
+// getalluser
 
-}
-
-// getalluser 
-
-export const getallusers =async()=>{
-
-    const user = await User.find();
-    return user;    
-}
-
+export const getallusers = async () => {
+  const user = await User.find();
+  return user;
+};
 
 // get user by id
 
-export const getuserbyid = async(id)=>{
+export const getuserbyid = async (id) => {
+  const user = await User.findById(id).select("-password");
 
-        const user = await User.findById(id).select("-password");
-        
-        if(!user){
-            throw createNotFoundError("user Not Found"); 
-        }
+  if (!user) {
+    throw createNotFoundError("user Not Found");
+  }
 
-        return user;
-        
-} 
+  return user;
+};
 
-// put 
-export const updateuser = async(id,userData)=>{
+// put
+export const updateuser = async (id, userData) => {
+  const user = await User.findByIdAndUpdate(id, userData, {
+    new: true,
+  });
 
-        const user = await User.findByIdAndUpdate(id,userData,{
-            new:true
-        })
+  // if(!user){
+  //     throw createNotFoundError("user Not found");
+  // }
 
-        // if(!user){
-        //     throw createNotFoundError("user Not found");
-        // }
+  return user;
+};
 
-        return user;
-   
-}
-
-
-export const deleteuser = async(id)=>{
-
-    
-        const user = await User.findByIdAndDelete(id)
-        return user;
-
- 
-}
+export const deleteuser = async (id) => {
+  const user = await User.findByIdAndDelete(id);
+  return user;
+};

@@ -1,7 +1,17 @@
 import User from "../../DB/models/user.model.js";
-import { createBadRequestError, createConflictError, createNotFoundError, createUnauthorizedError } from "../../utils/APIErrors.js";
+import {
+  createBadRequestError,
+  createConflictError,
+  createNotFoundError,
+  createUnauthorizedError,
+} from "../../utils/APIErrors.js";
 import sendMail from "../../utils/sendEmail.js";
-import { generateAccessToken, generateRefreshToken, generateResetToken, verifyToken } from "../../utils/tokens.js";
+import {
+  generateAccessToken,
+  generateRefreshToken,
+  generateResetToken,
+  verifyToken,
+} from "../../utils/tokens.js";
 import crypto from "crypto";
 
 export const registerService = async (userData) => {
@@ -20,7 +30,9 @@ export const registerService = async (userData) => {
 };
 
 export const loginService = async (userData) => {
-  const user = await User.findOne({ email: userData.email }).select('+password');
+  const user = await User.findOne({ email: userData.email }).select(
+    "+password",
+  );
   if (!user) {
     throw createUnauthorizedError("Invalid email or password");
   }
@@ -35,7 +47,7 @@ export const loginService = async (userData) => {
 
   user.password = undefined;
   return { user, accessToken, refreshToken };
-}
+};
 
 export const verifyRefreshToken = async (refreshToken) => {
   if (!refreshToken) {
@@ -43,18 +55,21 @@ export const verifyRefreshToken = async (refreshToken) => {
   }
 
   const decoded = verifyToken(refreshToken);
-  const accessToken = generateAccessToken({ _id: decoded._id, role: decoded.role });
+  const accessToken = generateAccessToken({
+    _id: decoded._id,
+    role: decoded.role,
+  });
 
   return accessToken;
-}
+};
 
 export const getCurrentUserService = async (userId) => {
-  const user = await User.findById(userId).select('-password');
+  const user = await User.findById(userId).select("-password");
   if (!user) {
     throw createNotFoundError("User not found");
   }
   return user;
-}
+};
 
 export const updateProfileService = async (userId, data) => {
   delete data.password;
@@ -70,10 +85,10 @@ export const updateProfileService = async (userId, data) => {
 
   user.password = undefined;
   return user;
-}
+};
 
 export const changeUserPasswordService = async (userId, data) => {
-  const user = await User.findById(userId).select('+password');
+  const user = await User.findById(userId).select("+password");
   if (!user) {
     throw createNotFoundError("User not found");
   }
@@ -88,21 +103,18 @@ export const changeUserPasswordService = async (userId, data) => {
 
   user.password = undefined;
   return user;
-}
+};
 
 export const forgotPasswordService = async (email) => {
-  const user = await User.findOne({ email }).select('+resetCode +resetCodeExpireTime +resetCodeVerify');
+  const user = await User.findOne({ email }).select(
+    "+resetCode +resetCodeExpireTime +resetCodeVerify",
+  );
   if (!user) {
     throw createNotFoundError("User not found");
   }
 
-  const resetCode = Math.floor(
-    100000 + Math.random() * 900000
-  ).toString();
-  user.resetCode = crypto
-    .createHash("sha256")
-    .update(resetCode)
-    .digest("hex");
+  const resetCode = Math.floor(100000 + Math.random() * 900000).toString();
+  user.resetCode = crypto.createHash("sha256").update(resetCode).digest("hex");
   user.resetCodeExpireTime = Date.now() + 10 * 60 * 1000;
   user.resetCodeVerify = false;
   const message = `your reset password code is ${resetCode}`;
@@ -117,7 +129,7 @@ export const forgotPasswordService = async (email) => {
   const resetToken = generateResetToken({ _id: user._id });
 
   return resetToken;
-}
+};
 
 export const verifyResetPasswordCodeService = async (resetToken, resetCode) => {
   if (!resetToken) {
@@ -131,7 +143,11 @@ export const verifyResetPasswordCodeService = async (resetToken, resetCode) => {
     .update(resetCode)
     .digest("hex");
 
-  const user = await User.findById({ _id: decoded._id, resetCode: hashedResetCode, resetCodeExpireTime: { $gt: Date.now() } }).select('+resetCode +resetCodeExpireTime +resetCodeVerify');
+  const user = await User.findById({
+    _id: decoded._id,
+    resetCode: hashedResetCode,
+    resetCodeExpireTime: { $gt: Date.now() },
+  }).select("+resetCode +resetCodeExpireTime +resetCodeVerify");
   if (!user) {
     throw createUnauthorizedError("Invalid or expired reset code");
   }
@@ -140,16 +156,21 @@ export const verifyResetPasswordCodeService = async (resetToken, resetCode) => {
   await user.save({ validateModifiedOnly: true });
 
   return true;
-}
+};
 
 export const resetPasswordService = async (resetToken, password) => {
   if (!resetToken) {
     throw createUnauthorizedError("Reset token required");
   }
   const decoded = verifyToken(resetToken);
-  const user = await User.findOne({ _id: decoded._id, resetCodeVerify: true }).select('+password');
+  const user = await User.findOne({
+    _id: decoded._id,
+    resetCodeVerify: true,
+  }).select("+password");
   if (!user) {
-    throw createUnauthorizedError("Invalid or expired reset token or reset code not verified");
+    throw createUnauthorizedError(
+      "Invalid or expired reset token or reset code not verified",
+    );
   }
 
   user.password = password;
@@ -159,4 +180,4 @@ export const resetPasswordService = async (resetToken, password) => {
   await user.save({ validateModifiedOnly: true });
 
   return true;
-}
+};

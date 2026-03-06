@@ -6,8 +6,15 @@ export const registerValidation = Joi.object({
   body: Joi.object({
     name: Joi.string().min(3).max(100).trim().required(),
     email: Joi.string().email().lowercase().trim().required(),
-    password: Joi.string().min(8).pattern(passwordRegex).required("Password is required"),
-    confirmPassword: Joi.string().min(8).pattern(passwordRegex).required("Confirm password is required").valid(Joi.ref("password")),
+    password: Joi.string()
+      .min(8)
+      .pattern(passwordRegex)
+      .required("Password is required"),
+    confirmPassword: Joi.string()
+      .min(8)
+      .pattern(passwordRegex)
+      .required("Confirm password is required")
+      .valid(Joi.ref("password")),
     bio: Joi.string().min(10).optional(),
   }).required(),
 });
@@ -31,7 +38,11 @@ export const changePasswordValidation = Joi.object({
   body: Joi.object({
     oldPassword: Joi.string().min(8).pattern(passwordRegex).required(),
     newPassword: Joi.string().min(8).pattern(passwordRegex).required(),
-    confirmNewPassword: Joi.string().min(8).pattern(passwordRegex).required().valid(Joi.ref("newPassword")),
+    confirmNewPassword: Joi.string()
+      .min(8)
+      .pattern(passwordRegex)
+      .required()
+      .valid(Joi.ref("newPassword")),
   }).required(),
 });
 
@@ -50,6 +61,10 @@ export const verifyResetPasswordCodeValidation = Joi.object({
 export const resetPasswordValidation = Joi.object({
   body: Joi.object({
     password: Joi.string().min(8).pattern(passwordRegex).required(),
-    confirmPassword: Joi.string().min(8).pattern(passwordRegex).required().valid(Joi.ref("password")),
+    confirmPassword: Joi.string()
+      .min(8)
+      .pattern(passwordRegex)
+      .required()
+      .valid(Joi.ref("password")),
   }).required(),
 });
