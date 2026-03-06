@@ -5,35 +5,35 @@ const userSchema = new mongoose.Schema(
   {
     name: {
       type: String,
-      required: true,
+      required: true
     },
     bio: {
       type: String,
-      minlength: 10,
+      minlength: 10
     },
     email: {
       type: String,
       required: true,
       trim: true,
-      unique: true,
+      unique: true
     },
     password: {
       type: String,
       required: true,
       minlength: 8,
       trim: true,
-      select: false,
+      select: false
     },
     avatar: String,
     role: {
       type: String,
       enum: ['user', 'admin'],
-      default: 'user',
+      default: 'user'
     },
     active: { type: Boolean, default: true },
     resetCode: { type: String, select: false },
     resetCodeExpireTime: { type: Date, select: false },
-    resetCodeVerify: { type: Boolean, select: false },
+    resetCodeVerify: { type: Boolean, select: false }
   },
   {
     timestamps: true,
