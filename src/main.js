@@ -18,8 +18,13 @@ function bootstrap(app) {
 app.use((req, res) => {
   res.status(404).json({ message: "this Router is not found" });
 });
-
+=======
+  app.use("/{*any}", (req, res) => {
+    res.status(404).json({ message: "this Router is not found" });
+ 
   app.use(errorHandler);
 }
 
+
+export default bootstrap;
 export default bootstrap;
