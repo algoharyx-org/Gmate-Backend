@@ -5,6 +5,7 @@ import userRouter from "./modules/user/user.routes.js";
 import projectRouter from "./modules/project/project.route.js";
 import commentRouter from "./modules/comment/comment.routes.js";
 import { errorHandler } from "./middlewares/errorHandler.js";
+import contactRouter from "./modules/contact/contact.route.js";
 
 function bootstrap(app) {
   app.use(apiLimiter);
@@ -14,17 +15,12 @@ function bootstrap(app) {
   app.use("/users", userRouter);
   app.use("/projects", projectRouter);
   app.use("/comment", commentRouter);
+  app.use("/contact", contactRouter);
 
-app.use((req, res) => {
-  res.status(404).json({ message: "this Router is not found" });
-});
-=======
   app.use("/{*any}", (req, res) => {
     res.status(404).json({ message: "this Router is not found" });
- 
+  });
   app.use(errorHandler);
 }
 
-
-export default bootstrap;
 export default bootstrap;
