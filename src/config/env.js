@@ -13,5 +13,6 @@ export const config = {
   emailHost: process.env.EMAIL_HOST,
   emailUsername: process.env.EMAIL_USERNAME,
   emailPassword: process.env.EMAIL_PASSWORD,
+  emailFrom: process.env.EMAIL_FROM,
   appName: process.env.APP_NAME,
 };
