@@ -1,6 +1,5 @@
 import Joi from "joi";
 
-// Validation schema for creating a new task
 export const createTaskValidation = Joi.object({
     body: Joi.object({
         title: Joi.string().min(3).max(100).trim().required(),
@@ -17,8 +16,6 @@ export const createTaskValidation = Joi.object({
     }).required(),
 });
 
-// Validation schema for updating an existing task
-// All fields are optional because the user might only want to update a single field
 export const updateTaskValidation = Joi.object({
     body: Joi.object({
         title: Joi.string().min(3).max(100).trim().optional(),
@@ -34,7 +31,6 @@ export const updateTaskValidation = Joi.object({
     }).required(),
 });
 
-// Validation schema for assigning a task
 export const assignTaskValidation = Joi.object({
     body: Joi.object({
         assignee: Joi.string().hex().length(24).required(),
