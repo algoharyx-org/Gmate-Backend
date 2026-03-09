@@ -1,5 +1,6 @@
 import { Router } from "express";
 import {
+    assignTask,
     createTask,
     deleteTask,
     getAllTasks,
@@ -9,6 +10,7 @@ import {
 import { authentication } from "../../middlewares/authentication.js";
 import Validate from "../../middlewares/validate.js";
 import {
+    assignTaskValidation,
     createTaskValidation,
     updateTaskValidation,
 } from "./task.validator.js";
@@ -31,6 +33,13 @@ taskRouter.put(
     authentication,
     Validate(updateTaskValidation),
     updateTask
+);
+
+taskRouter.patch(
+    "/:id/assign",
+    authentication,
+    Validate(assignTaskValidation),
+    assignTask
 );
 
 taskRouter.delete("/:id", authentication, deleteTask);

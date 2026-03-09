@@ -160,3 +160,42 @@ export const deleteTaskService = async (userId, taskId) => {
 
     return { id: taskId };
 };
+
+export const assignTaskService = async (userId, taskId, assigneeId) => {
+    const task = await Task.findById(taskId);
+
+    if (!task) {
+        throw createNotFoundError("Task not found");
+    }
+
+    const project = await checkProjectAccess(userId, task.project);
+    const isOwner = project.owner.toString() === userId;
+    const isManager = project.members.some(
+        (m) => m.user.toString() === userId && m.role === "manager"
+    );
+    const isCreator = task.createdBy.toString() === userId;
+
+    if (!isOwner && !isManager && !isCreator) {
+        throw createForbiddenError("You are not authorized to assign this task");
+    }
+
+    const isAssigneeOwner = project.owner.toString() === assigneeId;
+    const isAssigneeMember = project.members.some(
+        (m) => m.user.toString() === assigneeId
+    );
+
+    if (!isAssigneeOwner && !isAssigneeMember) {
+        throw createBadRequestError("Assignee must be a member of the project");
+    }
+
+    const updatedTask = await Task.findByIdAndUpdate(
+        taskId,
+        { assignee: assigneeId },
+        { new: true }
+    )
+        .populate("project", "title status")
+        .populate("assignee", "name email avatar")
+        .populate("createdBy", "name email avatar");
+
+    return updatedTask;
+};

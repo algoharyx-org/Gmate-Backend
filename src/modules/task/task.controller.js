@@ -1,5 +1,6 @@
 import expressAsyncHandler from "express-async-handler";
 import {
+    assignTaskService,
     createTaskService,
     deleteTaskService,
     getAllTasksService,
@@ -61,4 +62,18 @@ export const deleteTask = expressAsyncHandler(async (req, res) => {
     await deleteTaskService(req.userId, req.params.id);
 
     res.status(200).json(successResponse({}, "Task deleted successfully"));
+});
+
+// @desc     Assign a task to a user
+// @route    PATCH /tasks/:id/assign
+// @access   Private 
+export const assignTask = expressAsyncHandler(async (req, res) => {
+    const task = await assignTaskService(
+        req.userId,
+        req.params.id,
+        req.body.assignee
+    );
+    res
+        .status(200)
+        .json(successResponse(task, "Task assigned successfully"));
 });
