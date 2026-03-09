@@ -4,6 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "start": "node index.js",
     "dev": "nodemon index.js"
   },
   "keywords": [],
@@ -25,7 +26,9 @@
     "jsonwebtoken": "^9.0.3",
     "mongoose": "^9.2.3",
     "multer": "^2.1.0",
-    "nodemailer": "^8.0.1",
+    "nodemailer": "^8.0.1"
+  },
+  "devDependencies": {
     "nodemon": "^3.1.14"
   }
 }
