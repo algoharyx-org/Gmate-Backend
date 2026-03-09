@@ -1,43 +1,71 @@
-import { Router } from 'express';
-import * as commentController from './comment.controller.js';
-// تعديل الاستيراد ليتناسب مع الـ export default والاسم الكبير V
-import Validate from '../../middlewares/validate.js'; 
-import { authentication } from '../../middlewares/authentication.js';
-import * as commentValidator from './comment.validator.js';
+import { Router } from "express";
+import {
+  addComment,
+  getComments,
+  getCommentById,
+  updateComment,
+  deleteComment,
+} from "./comment.controller.js";
+import { authentication } from "../../middlewares/authentication.js";
+import Validate from "../../middlewares/validate.js";
+import {
+  addCommentValidation,
+  getCommentsValidation,
+  getOneCommentValidation,
+  updateCommentValidation,
+  deleteCommentValidation,
+} from "./comment.validator.js";
 
 const commentRouter = Router();
 
-// 1. إنشاء كومنت
-commentRouter.post('/', 
-    authentication, 
-    Validate(commentValidator.addCommentSchema), // استخدمنا الاسم الجديد هنا
-    commentController.addComment
+// @desc     Add a new comment
+// @route    POST /comments
+// @access   Private
+commentRouter.post(
+  "/",
+  authentication,
+  Validate(addCommentValidation),
+  addComment
 );
 
-// 2. جلب كل الكومنتات الخاصة بتاسك معينة
-commentRouter.get('/:taskId', 
-    Validate(commentValidator.getCommentsSchema), 
-    commentController.getComments
+// @desc     Get task comments
+// @route    GET /comments/:taskId
+// @access   Private
+commentRouter.get(
+  "/:taskId",
+  authentication,
+  Validate(getCommentsValidation),
+  getComments
 );
 
-// 3. جلب كومنت واحد محدد
-commentRouter.get('/one/:commentId', 
-    Validate(commentValidator.getOneCommentSchema), 
-    commentController.getCommentById
+// @desc     Get one comment
+// @route    GET /comments/one/:commentId
+// @access   Private
+commentRouter.get(
+  "/one/:commentId",
+  authentication,
+  Validate(getOneCommentValidation),
+  getCommentById
 );
 
-// 4. تعديل كومنت
-commentRouter.put('/:commentId', 
-    authentication, 
-    Validate(commentValidator.updateCommentSchema), 
-    commentController.updateComment
+// @desc     Update comment
+// @route    PUT /comments/:commentId
+// @access   Private
+commentRouter.put(
+  "/:commentId",
+  authentication,
+  Validate(updateCommentValidation),
+  updateComment
 );
 
-// 5. حذف كومنت
-commentRouter.delete('/:commentId',
-    authentication,
-    Validate(commentValidator.getOneCommentSchema), 
-    commentController.deleteComment
+// @desc     Delete comment
+// @route    DELETE /comments/:commentId
+// @access   Private
+commentRouter.delete(
+  "/:commentId",
+  authentication,
+  Validate(deleteCommentValidation),
+  deleteComment
 );
 
 export default commentRouter;
