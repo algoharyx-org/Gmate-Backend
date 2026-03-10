@@ -1,18 +1,42 @@
 import Joi from "joi";
 
-export const createUserValidator = Joi.object({
-  name: Joi.string().min(1).required().messages({
-    "string.empty": "Name is required",
-    "any.required": "Name is required",
-  }),
+const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^\w\s]).{8,}$/;
 
-  email: Joi.string().email().required().messages({
-    "string.email": "Invalid email format",
-    "any.required": "Email is required",
-  }),
+export const createUserValidator = Joi.object({ 
 
-  password: Joi.string().min(6).required().messages({
-    "string.min": "Password must be at least 6 characters",
-    "any.required": "Password is required",
-  }),
+
+  body: Joi.object({
+      name: Joi.string().min(3).max(100).trim().required(),
+      email: Joi.string().email().lowercase().trim().required(),
+      password: Joi.string()
+        .min(8)
+        .pattern(passwordRegex)
+        .required("Password is required"),
+      confirmPassword: Joi.string()
+        .min(8)
+        .pattern(passwordRegex)
+        .required("Confirm password is required")
+        .valid(Joi.ref("password")),
+      bio: Joi.string().min(10).optional(),
+    }).required(),
+
 });
+
+
+
+export const updateUserValidator = Joi.object({
+  
+
+
+   body: Joi.object({
+      name: Joi.string().min(3).max(100).trim().optional(),
+      email:Joi.string().required(),
+      bio: Joi.string().min(10).optional(),
+      avatar: Joi.string().uri().optional(),
+    }).required(),
+  
+
+})
+
+
+
