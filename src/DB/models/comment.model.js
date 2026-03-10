@@ -1,7 +1,9 @@
-import { Schema, model, Types } from 'mongoose';
+import {Mongoose } from "mongoose";
+import { Types } from "mongoose";
+import mongoose from "mongoose";
 
-const commentSchema = new Schema({
-    content: {
+const commentSchema = new mongoose.Schema({
+   content: {
         type: String,
         required: [true, 'Comment content is required'],
         trim: true
@@ -16,6 +18,8 @@ const commentSchema = new Schema({
         ref: 'Task',
         required: true
     }
-}, { timestamps: true });
+},{ timestamps: true });
 
-export const commentModel = model('Comment', commentSchema);
+const Comment = mongoose.model("Comment", commentSchema);
+
+export default Comment;
