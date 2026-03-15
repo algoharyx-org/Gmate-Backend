@@ -6,6 +6,7 @@ import {
     createForbiddenError,
     createNotFoundError,
 } from "../../utils/APIErrors.js";
+import { getPagination, getPaginationMetadata } from "../../utils/pagination.js";
 
 const checkProjectAccess = async (userId, projectId) => {
     const project = await Project.findById(projectId);
@@ -81,6 +82,44 @@ export const getAllTasksService = async (userId, queryOptions = {}) => {
         .populate("createdBy", "name email avatar");
 
     return tasks;
+};
+
+export const getMyTasksService = async (userId, query = {}) => {
+    const { status, priority, projectId, search, page, limit } = query;
+    const pagination = getPagination(page, limit);
+
+    let filter = {
+        $or: [
+            { createdBy: userId },
+            { assignee: userId },
+        ],
+    };
+
+    // If a user is a member of a project, they should see all tasks in that project too?
+    // Ticket says "personal workloads", usually means tasks assigned to me or created by me.
+    // But sometimes it means tasks in my projects. 
+    // Let's stick to tasks assigned to or created by the user, plus optional filters.
+
+    if (status) filter.status = status;
+    if (priority) filter.priority = priority;
+    if (projectId) filter.project = projectId;
+    if (search) filter.title = { $regex: search, $options: "i" };
+
+    const tasks = await Task.find(filter)
+        .populate("project", "title status")
+        .populate("assignee", "name email avatar")
+        .select("title description status priority project assignee createdAt")
+        .skip(pagination.skip)
+        .limit(pagination.limit)
+        .lean();
+
+    const totalCount = await Task.countDocuments(filter);
+    const metadata = getPaginationMetadata(totalCount, pagination.page, pagination.limit);
+
+    return {
+        tasks,
+        ...metadata,
+    };
 };
 
 export const getTaskByIdService = async (userId, taskId) => {

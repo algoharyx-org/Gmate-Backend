@@ -4,6 +4,7 @@ import {
   createProject,
   deleteProject,
   getAllProjects,
+  getMyProjects,
   getProjectById,
   removeMember,
   updateMemberRole,
@@ -14,6 +15,7 @@ import Validate from "../../middlewares/validate.js";
 import {
   addMemberValidation,
   createProjectValidation,
+  getMyProjectsValidation,
   updateMemberRoleValidation,
   updateProjectValidation,
 } from "./project.validator.js";
@@ -27,6 +29,12 @@ projectRouter.post(
   createProject,
 );
 
+projectRouter.get(
+  "/me",
+  authentication,
+  Validate(getMyProjectsValidation),
+  getMyProjects,
+);
 projectRouter.get("/", authentication, getAllProjects);
 projectRouter.get("/:id", authentication, getProjectById);
 projectRouter.put(

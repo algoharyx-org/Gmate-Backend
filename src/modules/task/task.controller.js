@@ -4,6 +4,7 @@ import {
     createTaskService,
     deleteTaskService,
     getAllTasksService,
+    getMyTasksService,
     getTaskByIdService,
     updateTaskService,
 } from "./task.service.js";
@@ -16,6 +17,16 @@ export const createTask = expressAsyncHandler(async (req, res) => {
     const task = await createTaskService(req.userId, req.body);
 
     res.status(201).json(createResponse(task, "Task created successfully"));
+});
+
+// @desc     Get my tasks (with filtering, search and pagination)
+// @route    GET /tasks/me
+// @access   Private
+export const getMyTasks = expressAsyncHandler(async (req, res) => {
+    const result = await getMyTasksService(req.userId, req.query);
+    res
+        .status(200)
+        .json(successResponse(result, "Tasks retrieved successfully"));
 });
 
 // @desc     Get all tasks

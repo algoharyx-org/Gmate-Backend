@@ -1,5 +1,4 @@
 import mongoose from 'mongoose';
-
 const commentSchema = new mongoose.Schema({
     content: {
         type: String,
@@ -8,7 +7,7 @@ const commentSchema = new mongoose.Schema({
     },
     createdBy: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'User', 
+        ref: 'User',
         required: true
     },
     taskId: {

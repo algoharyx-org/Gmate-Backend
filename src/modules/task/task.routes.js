@@ -4,6 +4,7 @@ import {
     createTask,
     deleteTask,
     getAllTasks,
+    getMyTasks,
     getTaskById,
     updateTask,
 } from "./task.controller.js";
@@ -12,6 +13,7 @@ import Validate from "../../middlewares/validate.js";
 import {
     assignTaskValidation,
     createTaskValidation,
+    getMyTasksValidation,
     updateTaskValidation,
 } from "./task.validator.js";
 
@@ -24,6 +26,12 @@ taskRouter.post(
     createTask
 );
 
+taskRouter.get(
+    "/me",
+    authentication,
+    Validate(getMyTasksValidation),
+    getMyTasks
+);
 taskRouter.get("/", authentication, getAllTasks);
 
 taskRouter.get("/:id", authentication, getTaskById);
