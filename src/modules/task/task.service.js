@@ -83,6 +83,46 @@ export const getAllTasksService = async (userId, queryOptions = {}) => {
     return tasks;
 };
 
+export const getMyTasksService = async (userId, query = {}) => {
+    const { status, priority, projectId, search, page = 1, limit = 10 } = query;
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+
+    let filter = {
+        $or: [
+            { createdBy: userId },
+            { assignee: userId },
+        ],
+    };
+
+    // If a user is a member of a project, they should see all tasks in that project too?
+    // Ticket says "personal workloads", usually means tasks assigned to me or created by me.
+    // But sometimes it means tasks in my projects. 
+    // Let's stick to tasks assigned to or created by the user, plus optional filters.
+
+    if (status) filter.status = status;
+    if (priority) filter.priority = priority;
+    if (projectId) filter.project = projectId;
+    if (search) filter.title = { $regex: search, $options: "i" };
+
+    const tasks = await Task.find(filter)
+        .populate("project", "title status")
+        .populate("assignee", "name email avatar")
+        .select("title description status priority project assignee createdAt")
+        .skip(skip)
+        .limit(parseInt(limit))
+        .lean();
+
+    const totalCount = await Task.countDocuments(filter);
+    const totalPages = Math.ceil(totalCount / parseInt(limit));
+
+    return {
+        tasks,
+        totalCount,
+        currentPage: parseInt(page),
+        totalPages,
+    };
+};
+
 export const getTaskByIdService = async (userId, taskId) => {
     const task = await Task.findById(taskId)
         .populate("project", "title status owner members")
