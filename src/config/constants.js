@@ -28,13 +28,15 @@ export const PROJECT_ROLE = {
 export const TASK_STATUS = {
   TODO: "to-do",
   IN_PROGRESS: "in-progress",
-  DONE: "done",
-  ARCHIVED: "archived",
+  REVIEW: "review",
+  COMPLETED: "completed",
+  IMPORTANT: "important",
+  UPCOMING: "upcoming",
 };
 
 export const TASK_PRIORITY = {
   LOW: "low",
   MEDIUM: "medium",
   HIGH: "high",
-  CRITICAL: "critical",
+  CRITICAL: "urgent",
 };
