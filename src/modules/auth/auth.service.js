@@ -13,6 +13,7 @@ import {
   verifyToken,
 } from "../../utils/tokens.js";
 import crypto from "crypto";
+import { deleteFromCloudinary, uploadToCloudinary } from "../../utils/uploadFiles.js";
 
 export const registerService = async (userData) => {
   const existingUser = await User.findOne({ email: userData.email });
@@ -86,6 +87,30 @@ export const updateProfileService = async (userId, data) => {
   user.password = undefined;
   return user;
 };
+
+export const uploadAvatarService = async (userId, file) => {
+  const user = await User.findById(userId).select("-password")
+
+  if (!user) {
+    throw createNotFoundError("user not found")
+  }
+
+  if (user.avatar && user.avatar.publicId) {
+    await deleteFromCloudinary(user.avatar.publicId)
+  }
+
+  const result = await uploadToCloudinary(file, "GMATE/avatars")
+
+  user.avatar = {
+    url: result.url,
+    publicId: result.publicId
+
+  }
+
+  await user.save()
+
+  return user
+}
 
 export const changeUserPasswordService = async (userId, data) => {
   const user = await User.findById(userId).select("+password");

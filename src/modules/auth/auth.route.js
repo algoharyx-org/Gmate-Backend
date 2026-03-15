@@ -9,6 +9,7 @@ import {
   register,
   resetPassword,
   updateProfile,
+  uploadAvatar,
   verifyResetPasswordCode,
 } from "./auth.controller.js";
 import { authentication } from "../../middlewares/authentication.js";
@@ -23,6 +24,7 @@ import {
   updateProfileValidation,
   verifyResetPasswordCodeValidation,
 } from "./auth.validator.js";
+import { uploadSingle } from "../../middlewares/upload.js";
 
 const authRouter = Router();
 
@@ -33,7 +35,7 @@ authRouter.post(
   register,
 );
 authRouter.post("/login", authLimiter, Validate(loginValidation), login);
-authRouter.post("/refresh", authentication, createAccessToken);
+authRouter.post("/refresh", createAccessToken);
 authRouter.post("/logout", authentication, logout);
 authRouter.get("/me", authentication, getCurrentUser);
 authRouter.put(
@@ -47,6 +49,12 @@ authRouter.put(
   authentication,
   Validate(changePasswordValidation),
   changeUserPassword,
+);
+authRouter.put(
+  "/uploadAvatar",
+  authentication,
+  uploadSingle("avatar"),
+  uploadAvatar,
 );
 authRouter.post(
   "/forgotPassword",

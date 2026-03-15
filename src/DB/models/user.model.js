@@ -24,7 +24,10 @@ const userSchema = new mongoose.Schema(
       trim: true,
       select: false,
     },
-    avatar: String,
+    avatar: {
+      url: String,
+      publicId: String
+    },
     role: {
       type: String,
       enum: ["user", "admin"],
