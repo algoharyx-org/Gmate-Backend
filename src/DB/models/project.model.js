@@ -48,8 +48,14 @@ const projectSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
+    toJSON:{virtuals:true},
+    toObject:{virtuals:true},
   },
 );
+
+projectSchema.virtual('id').get(function() {
+  return this._id.toHexString();
+})
 
 const Project = mongoose.model("Project", projectSchema);
 

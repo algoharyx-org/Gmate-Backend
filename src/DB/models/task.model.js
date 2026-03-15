@@ -19,8 +19,8 @@ const taskSchema = new mongoose.Schema(
 
         status: {
             type: String,
-            enum: ["to-do", "in-progress", "done", "archived"],
-            default: "to-do",
+            enum: ["todo", "in-progress", "review", "completed" , "important" , "Upcoming"],
+            default: "todo",
         },
 
         priority: {
@@ -52,9 +52,15 @@ const taskSchema = new mongoose.Schema(
     },
     {
         timestamps: true,
+
+        toJSON: {virtuals:true},
+        toObject: {virtuals:true},
     },
 );
 
+taskSchema.virtual('id').get(function() {
+    return this._id.toHexString();
+});
 
 const Task = mongoose.model("Task", taskSchema);
 
