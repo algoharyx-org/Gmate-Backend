@@ -6,6 +6,7 @@ import {
     createForbiddenError,
     createNotFoundError,
 } from "../../utils/APIErrors.js";
+import { getPagination, getPaginationMetadata } from "../../utils/pagination.js";
 
 const checkProjectAccess = async (userId, projectId) => {
     const project = await Project.findById(projectId);
@@ -84,8 +85,8 @@ export const getAllTasksService = async (userId, queryOptions = {}) => {
 };
 
 export const getMyTasksService = async (userId, query = {}) => {
-    const { status, priority, projectId, search, page = 1, limit = 10 } = query;
-    const skip = (parseInt(page) - 1) * parseInt(limit);
+    const { status, priority, projectId, search, page, limit } = query;
+    const pagination = getPagination(page, limit);
 
     let filter = {
         $or: [
@@ -108,18 +109,16 @@ export const getMyTasksService = async (userId, query = {}) => {
         .populate("project", "title status")
         .populate("assignee", "name email avatar")
         .select("title description status priority project assignee createdAt")
-        .skip(skip)
-        .limit(parseInt(limit))
+        .skip(pagination.skip)
+        .limit(pagination.limit)
         .lean();
 
     const totalCount = await Task.countDocuments(filter);
-    const totalPages = Math.ceil(totalCount / parseInt(limit));
+    const metadata = getPaginationMetadata(totalCount, pagination.page, pagination.limit);
 
     return {
         tasks,
-        totalCount,
-        currentPage: parseInt(page),
-        totalPages,
+        ...metadata,
     };
 };
 
