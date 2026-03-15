@@ -4,6 +4,7 @@ import {
   createProjectService,
   deleteProjectService,
   getAllProjectsService,
+  getMyProjectsService,
   getProjectByIdService,
   removeMemberService,
   updateMemberRoleService,
@@ -17,6 +18,16 @@ import { createResponse, successResponse } from "../../utils/APIResponse.js";
 export const createProject = expressAsyncHandler(async (req, res) => {
   const project = await createProjectService(req.userId, req.body);
   res.status(201).json(createResponse(project, "Project created successfully"));
+});
+
+// @desc     Get my projects (with progress and pagination)
+// @route    GET /projects/me
+// @access   Private
+export const getMyProjects = expressAsyncHandler(async (req, res) => {
+  const result = await getMyProjectsService(req.userId, req.query);
+  res
+    .status(200)
+    .json(successResponse(result, "Projects retrieved successfully"));
 });
 
 // @desc     Get all projects
