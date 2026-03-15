@@ -5,7 +5,7 @@ export const createTaskValidation = Joi.object({
         title: Joi.string().min(3).max(100).trim().required(),
         description: Joi.string().min(10).trim().required(),
         status: Joi.string()
-            .valid("to-do", "in-progress", "done", "archived")
+            .valid("todo", "in-progress", "review", "completed" , "important" , "Upcoming")
             .optional(),
         priority: Joi.string()
             .valid("low", "medium", "high", "critical")
@@ -21,7 +21,7 @@ export const updateTaskValidation = Joi.object({
         title: Joi.string().min(3).max(100).trim().optional(),
         description: Joi.string().min(10).trim().optional(),
         status: Joi.string()
-            .valid("to-do", "in-progress", "done", "archived")
+            .valid("todo", "in-progress", "review", "completed" , "important" , "Upcoming")
             .optional(),
         priority: Joi.string()
             .valid("low", "medium", "high", "critical")
