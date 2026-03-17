@@ -84,7 +84,7 @@ export const getAllTasksService = async (userId, queryOptions = {}) => {
 };
 
 export const getTaskByIdService = async (userId, taskId) => {
-    const task = await Task.findById(taskId)
+    const task = await Task.findById(taskId).populate("comments")
         .populate("project", "title status owner members")
         .populate("assignee", "name email avatar")
         .populate("createdBy", "name email avatar");
