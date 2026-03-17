@@ -21,7 +21,9 @@ export const createProjectService = async (ownerId, projectData) => {
 export const getAllProjectsService = async (userId) => {
   const projects = await Project.find({
     $or: [{ owner: userId }, { "members.user": userId }],
-  }).populate("owner", "name email avatar");
+  })
+    .populate("owner", "name email avatar")
+    .populate("members.user", "name email avatar");
 
   return projects;
 };

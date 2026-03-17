@@ -7,6 +7,7 @@ import {
     createNotFoundError,
 } from "../../utils/APIErrors.js";
 import { getPagination, getPaginationMetadata } from "../../utils/pagination.js";
+import { uploadToCloudinary, deleteFromCloudinary } from "../../utils/uploadFiles.js";
 
 const checkProjectAccess = async (userId, projectId) => {
     const project = await Project.findById(projectId);
@@ -232,6 +233,73 @@ export const assignTaskService = async (userId, taskId, assigneeId) => {
         { assignee: assigneeId },
         { new: true }
     )
+        .populate("project", "title status")
+        .populate("assignee", "name email avatar")
+        .populate("createdBy", "name email avatar");
+
+    return updatedTask;
+};
+
+export const uploadTaskAttachmentsService = async (userId, taskId, files) => {
+    if (!files || files.length === 0) {
+        throw createBadRequestError("At least one file is required");
+    }
+
+    const task = await Task.findById(taskId);
+    if (!task) {
+        throw createNotFoundError("Task not found");
+    }
+
+    await checkProjectAccess(userId, task.project);
+
+    // Upload all files to Cloudinary in parallel
+    const uploadPromises = files.map((file) =>
+        uploadToCloudinary(file, "GMATE/tasks")
+    );
+    const uploadResults = await Promise.all(uploadPromises);
+
+    // Map Cloudinary results to attachment objects
+    const attachments = uploadResults.map((result, index) => ({
+        url: result.url,
+        publicId: result.publicId,
+        originalName: files[index].originalname,
+        type: result.type,
+        size: result.size,
+    }));
+
+    // Push all new attachments into the task
+    task.attachments.push(...attachments);
+    await task.save();
+
+    const updatedTask = await Task.findById(taskId)
+        .populate("project", "title status")
+        .populate("assignee", "name email avatar")
+        .populate("createdBy", "name email avatar");
+
+    return updatedTask;
+};
+
+export const deleteTaskAttachmentService = async (userId, taskId, attachmentId) => {
+    const task = await Task.findById(taskId);
+    if (!task) {
+        throw createNotFoundError("Task not found");
+    }
+
+    await checkProjectAccess(userId, task.project);
+
+    const attachment = task.attachments.id(attachmentId);
+    if (!attachment) {
+        throw createNotFoundError("Attachment not found");
+    }
+
+    // Delete from Cloudinary
+    await deleteFromCloudinary(attachment.publicId);
+
+    // Remove from task
+    task.attachments.pull(attachmentId);
+    await task.save();
+
+    const updatedTask = await Task.findById(taskId)
         .populate("project", "title status")
         .populate("assignee", "name email avatar")
         .populate("createdBy", "name email avatar");
