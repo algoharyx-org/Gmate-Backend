@@ -13,7 +13,7 @@ import { createResponse, successResponse } from "../../utils/APIResponse.js";
 // @route    POST /tasks
 // @access   Private 
 export const createTask = expressAsyncHandler(async (req, res) => {
-    const task = await createTaskService(req.userId, req.body);
+    const task = await createTaskService(req.userId, req.body, req.files);
 
     res.status(201).json(createResponse(task, "Task created successfully"));
 });
@@ -49,6 +49,7 @@ export const updateTask = expressAsyncHandler(async (req, res) => {
         req.userId,
         req.params.id,
         req.body,
+        req.files
     );
     res
         .status(200)

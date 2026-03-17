@@ -2,6 +2,8 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
+console.log("DB_URL from .env:", process.env.DB_URL); 
+
 export const config = {
   nodeEnv: process.env.NODE_ENV,
   port: process.env.PORT,

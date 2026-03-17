@@ -49,7 +49,7 @@ export const Updateuser = async (req, res) => {
   try {
     const { id } = req.params;
     const userData = req.body;
-    const user = await Userservice.updateuser(id, userData);
+    const user = await Userservice.updateuser(id, userData, req.file);
     // .select("-password");
 
     if (!user) {

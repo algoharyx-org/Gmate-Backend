@@ -14,12 +14,14 @@ import {
     createTaskValidation,
     updateTaskValidation,
 } from "./task.validator.js";
+import { fileValidation, uploadFile } from "../../middlewares/multer.js";
 
 const taskRouter = Router();
 
 taskRouter.post(
     "/",
     authentication,
+    uploadFile([...fileValidation.image, ...fileValidation.file]).array("files", 5),
     Validate(createTaskValidation),
     createTask
 );
@@ -31,9 +33,11 @@ taskRouter.get("/:id", authentication, getTaskById);
 taskRouter.put(
     "/:id",
     authentication,
+    uploadFile([...fileValidation.image, ...fileValidation.file]).array("files", 5),
     Validate(updateTaskValidation),
     updateTask
 );
+
 
 taskRouter.patch(
     "/:id/assign",

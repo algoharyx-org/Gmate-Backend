@@ -1,16 +1,31 @@
 import Project from "../../DB/models/project.model.js";
 import User from "../../DB/models/user.model.js";
 import {
-  createBadRequestError,
   createForbiddenError,
   createNotFoundError,
 } from "../../utils/APIErrors.js";
+import { uploadToCloudinary } from "../../utils/cloudinary.js";
 
-export const createProjectService = async (ownerId, projectData) => {
+export const createProjectService = async (ownerId, projectData, files) => {
+  const attachments = [];
+  if (files && files.length > 0) {
+    for (const file of files) {
+      const result = await uploadToCloudinary(file.buffer, "Gmate/Projects");
+      attachments.push({
+        url: result.secure_url,
+        public_id: result.public_id,
+        name: file.originalname,
+        resource_type: result.resource_type,
+        format: result.format,
+      });
+    }
+  }
+
   const project = await Project.create({
     ...projectData,
     owner: ownerId,
     members: [{ user: ownerId, role: "manager" }],
+    attachments,
   });
 
   return project;
@@ -19,15 +34,15 @@ export const createProjectService = async (ownerId, projectData) => {
 export const getAllProjectsService = async (userId) => {
   const projects = await Project.find({
     $or: [{ owner: userId }, { "members.user": userId }],
-  }).populate("owner", "name email avatar");
+  })
+    .populate("owner members.user", "name email avatar");
 
   return projects;
 };
 
 export const getProjectByIdService = async (userId, projectId) => {
   const project = await Project.findById(projectId)
-    .populate("owner", "name email avatar")
-    .populate("members.user", "name email avatar");
+    .populate("owner members.user", "name email avatar");
 
   if (!project) {
     throw createNotFoundError("Project not found");
@@ -45,7 +60,12 @@ export const getProjectByIdService = async (userId, projectId) => {
   return project;
 };
 
-export const updateProjectService = async (userId, projectId, updateData) => {
+export const updateProjectService = async (
+  userId,
+  projectId,
+  updateData,
+  files,
+) => {
   const project = await Project.findById(projectId);
 
   if (!project) {
@@ -63,13 +83,25 @@ export const updateProjectService = async (userId, projectId, updateData) => {
     );
   }
 
-  const updatedProject = await Project.findByIdAndUpdate(
-    projectId,
-    updateData,
-    { new: true },
-  )
-    .populate("owner", "name email avatar")
-    .populate("members.user", "name email avatar");
+  if (files && files.length > 0) {
+    const attachments = [];
+    for (const file of files) {
+      const result = await uploadToCloudinary(file.buffer, "Gmate/Projects");
+      attachments.push({
+        url: result.secure_url,
+        public_id: result.public_id,
+        name: file.originalname,
+        resource_type: result.resource_type,
+        format: result.format,
+      });
+    }
+    updateData.attachments = [...(project.attachments || []), ...attachments];
+  }
+
+  const updatedProject = await Project.findByIdAndUpdate(projectId, updateData, {
+    new: true,
+  })
+    .populate("owner members.user", "name email avatar");
 
   return updatedProject;
 };
@@ -125,8 +157,7 @@ export const addMemberService = async (userId, projectId, memberData) => {
   await project.save();
 
   const updatedProject = await Project.findById(projectId)
-    .populate("owner", "name email avatar")
-    .populate("members.user", "name email avatar");
+    .populate("owner members.user", "name email avatar");
 
   return updatedProject;
 };
@@ -164,8 +195,7 @@ export const removeMemberService = async (userId, projectId, memberId) => {
   await project.save();
 
   const updatedProject = await Project.findById(projectId)
-    .populate("owner", "name email avatar")
-    .populate("members.user", "name email avatar");
+    .populate("owner members.user", "name email avatar");
 
   return updatedProject;
 };
@@ -210,8 +240,7 @@ export const updateMemberRoleService = async (
   await project.save();
 
   const updatedProject = await Project.findById(projectId)
-    .populate("owner", "name email avatar")
-    .populate("members.user", "name email avatar");
+    .populate("owner members.user", "name email avatar");
 
   return updatedProject;
 };

@@ -45,6 +45,15 @@ const projectSchema = new mongoose.Schema(
     endDate: {
       type: Date,
     },
+    attachments: [
+      {
+        url: String,
+        public_id: String,
+        name: String,
+        resource_type: String,
+        format: String,
+      },
+    ],
   },
   {
     timestamps: true,

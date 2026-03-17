@@ -15,7 +15,7 @@ import { createResponse, successResponse } from "../../utils/APIResponse.js";
 // @route    POST /projects
 // @access   Private
 export const createProject = expressAsyncHandler(async (req, res) => {
-  const project = await createProjectService(req.userId, req.body);
+  const project = await createProjectService(req.userId, req.body, req.files);
   res.status(201).json(createResponse(project, "Project created successfully"));
 });
 
@@ -47,6 +47,7 @@ export const updateProject = expressAsyncHandler(async (req, res) => {
     req.userId,
     req.params.id,
     req.body,
+    req.files,
   );
   res
     .status(200)

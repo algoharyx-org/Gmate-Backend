@@ -7,6 +7,8 @@ import commentRouter from "./modules/comment/comment.routes.js";
 import taskRouter from "./modules/task/task.routes.js";
 import { errorHandler } from "./middlewares/errorHandler.js";
 import contactRouter from "./modules/contact/contact.route.js";
+import fileRouter from "./modules/file/file.routes.js";
+
 
 function bootstrap(app) {
   app.use(apiLimiter);
@@ -18,6 +20,8 @@ function bootstrap(app) {
   app.use("/comment", commentRouter);
   app.use("/contact", contactRouter);
   app.use("/tasks", taskRouter);
+  app.use("/file", fileRouter);
+
   app.use("/{*any}", (req, res) => {
     res.status(404).json({ message: "this Router is not found" });
   });

@@ -17,12 +17,14 @@ import {
   updateMemberRoleValidation,
   updateProjectValidation,
 } from "./project.validator.js";
+import { uploadFile, fileValidation } from "../../middlewares/multer.js";
 
 const projectRouter = Router();
 
 projectRouter.post(
   "/",
   authentication,
+  uploadFile([...fileValidation.image, ...fileValidation.file]).array("files", 5),
   Validate(createProjectValidation),
   createProject,
 );
@@ -32,9 +34,11 @@ projectRouter.get("/:id", authentication, getProjectById);
 projectRouter.put(
   "/:id",
   authentication,
+  uploadFile([...fileValidation.image, ...fileValidation.file]).array("files", 5),
   Validate(updateProjectValidation),
   updateProject,
 );
+
 projectRouter.delete("/:id", authentication, deleteProject);
 
 projectRouter.post(

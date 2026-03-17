@@ -6,6 +6,7 @@ import {
     createForbiddenError,
     createNotFoundError,
 } from "../../utils/APIErrors.js";
+import { uploadToCloudinary } from "../../utils/cloudinary.js";
 
 const checkProjectAccess = async (userId, projectId) => {
     const project = await Project.findById(projectId);
@@ -25,7 +26,7 @@ const checkProjectAccess = async (userId, projectId) => {
     return project;
 };
 
-export const createTaskService = async (userId, taskData) => {
+export const createTaskService = async (userId, taskData, files) => {
     const { project: projectId, assignee } = taskData;
 
     await checkProjectAccess(userId, projectId);
@@ -45,9 +46,25 @@ export const createTaskService = async (userId, taskData) => {
             throw createBadRequestError("Assignee must be a member of the project");
         }
     }
+
+    const attachments = [];
+    if (files && files.length > 0) {
+        for (const file of files) {
+            const result = await uploadToCloudinary(file.buffer, `Gmate/Tasks/${projectId}`);
+            attachments.push({
+                url: result.secure_url,
+                public_id: result.public_id,
+                name: file.originalname,
+                resource_type: result.resource_type,
+                format: result.format
+            });
+        }
+    }
+
     const task = await Task.create({
         ...taskData,
         createdBy: userId,
+        attachments
     });
 
     return task;
@@ -76,9 +93,7 @@ export const getAllTasksService = async (userId, queryOptions = {}) => {
     }
 
     const tasks = await Task.find(filter)
-        .populate("project", "title status")
-        .populate("assignee", "name email avatar")
-        .populate("createdBy", "name email avatar");
+        .populate("assignee createdBy project", "name avatar title status");
 
     return tasks;
 };
@@ -98,7 +113,7 @@ export const getTaskByIdService = async (userId, taskId) => {
     return task;
 };
 
-export const updateTaskService = async (userId, taskId, updateData) => {
+export const updateTaskService = async (userId, taskId, updateData, files) => {
     const task = await Task.findById(taskId);
 
     if (!task) {
@@ -127,12 +142,25 @@ export const updateTaskService = async (userId, taskId, updateData) => {
         }
     }
 
+    if (files && files.length > 0) {
+        const attachments = [];
+        for (const file of files) {
+            const result = await uploadToCloudinary(file.buffer, `Gmate/Tasks/${task.project}`);
+            attachments.push({
+                url: result.secure_url,
+                public_id: result.public_id,
+                name: file.originalname,
+                resource_type: result.resource_type,
+                format: result.format
+            });
+        }
+        updateData.attachments = [...(task.attachments || []), ...attachments];
+    }
+
     const updatedTask = await Task.findByIdAndUpdate(taskId, updateData, {
         new: true,
     })
-        .populate("project", "title status")
-        .populate("assignee", "name email avatar")
-        .populate("createdBy", "name email avatar");
+        .populate("assignee createdBy project", "name avatar title status");
 
     return updatedTask;
 };
@@ -193,9 +221,7 @@ export const assignTaskService = async (userId, taskId, assigneeId) => {
         { assignee: assigneeId },
         { new: true }
     )
-        .populate("project", "title status")
-        .populate("assignee", "name email avatar")
-        .populate("createdBy", "name email avatar");
+        .populate("assignee createdBy project", "name avatar title status");
 
     return updatedTask;
 };
