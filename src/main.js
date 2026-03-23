@@ -20,9 +20,12 @@ function bootstrap(app) {
   app.use("/api/v1/comment", commentRouter);
   app.use("/api/v1/contact", contactRouter);
   app.use("/api/v1/tasks", taskRouter);
-  app.use("*", (req, res) => {
-    res.status(404).json({ message: "this Router is not found" });
-  });
+  // app.all("*", (req, res) => {
+  //   res.status(404).json({ message: "this Router is not found" });
+  // });
+  app.use((req, res, next) => {
+  res.status(404).json({ message: "this Router is not found" });
+});
   app.use(errorHandler);
 }
 
