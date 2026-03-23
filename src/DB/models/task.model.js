@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import Comment from "./comment.model.js";
 
 const taskSchema = new mongoose.Schema(
     {
@@ -81,8 +82,18 @@ const taskSchema = new mongoose.Schema(
     },
     {
         timestamps: true,
+        toJson: {virtuals:true},
+        toObject:{virtuals:true}
     },
 );
+ 
+taskSchema.virtual("comments",{
+    ref:"Comment",
+    localField:"_id",
+    foreignField:"task"
+}
+
+)
 
 
 const Task = mongoose.model("Task", taskSchema);

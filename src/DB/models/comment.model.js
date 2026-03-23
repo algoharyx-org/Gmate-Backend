@@ -15,7 +15,14 @@ const commentSchema = new mongoose.Schema({
         ref: 'Task',
         required: true
     }
-}, { timestamps: true });
+},{ timestamps: true 
+
+});
+
+
+
+
+const Comment = mongoose.model("Comment", commentSchema);
 
 const Comment = mongoose.model('Comment', commentSchema);
 
