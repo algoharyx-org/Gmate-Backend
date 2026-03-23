@@ -19,10 +19,96 @@ export const createProjectService = async (ownerId, projectData) => {
 };
 
 export const getAllProjectsService = async (userId) => {
-  const projects = await Project.find({
-    $or: [{ owner: userId }, { "members.user": userId }],
-  }).populate("owner", "name email avatar");
+  const projects = await Project.aggregate([
 
+    {
+      $match: {
+        $or: [
+          { owner: new mongoose.Types.ObjectId(userId) },
+          { "members.user": new mongoose.Types.ObjectId(userId) }
+        ]
+      }
+    },
+
+    {
+      $lookup: {
+        from: "users",
+        localField: "owner",
+        foreignField: "_id",
+        as: "owner"
+      }
+    },
+
+    {
+      $unwind: "$owner"
+    },
+
+    {
+      $lookup: {
+        from: "tasks",
+        localField: "_id",
+        foreignField: "project",
+        as: "tasks"
+      }
+    },
+
+    {
+      $addFields: {
+        totalTasks: { $size: "$tasks" },
+
+        completedTasks: {
+          $size: {
+            $filter: {
+              input: "$tasks",
+              as: "task",
+              cond: { $eq: ["$$task.status", "completed"] }
+            }
+          }
+        }
+      }
+    },
+
+
+    {
+      $addFields: {
+        progressPercentage: {
+          $cond: [
+            { $eq: ["$totalTasks", 0] },
+            0,
+            {
+              $round: [
+                {
+                  $multiply: [
+                    { $divide: ["$completedTasks", "$totalTasks"] },
+                    100
+                  ]
+                },
+                0   
+              ]
+            }
+          ]
+        }
+      }
+    },
+
+    {
+      $project: {
+        _id: 1,
+        title: 1,
+        status: 1,
+
+        owner: {
+          name: "$owner.name",
+          email: "$owner.email",
+          avatar: "$owner.avatar"
+        },
+
+        totalTasks: 1,
+        completedTasks: 1,
+        progressPercentage: 1
+      }
+    }
+  ]);
   return projects;
 };
 
