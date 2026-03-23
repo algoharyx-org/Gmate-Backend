@@ -15,4 +15,11 @@ export const config = {
   emailPassword: process.env.EMAIL_PASSWORD,
   emailFrom: process.env.EMAIL_FROM,
   appName: process.env.APP_NAME,
+  cloudinaryCloudName: process.env.CLOUDINARY_CLOUD_NAME,
+  cloudinaryApiKey: process.env.CLOUDINARY_API_KEY,
+  cloudinaryApiSecret: process.env.CLOUDINARY_API_SECRET,
+  maxFileSize: process.env.MAX_FILE_SIZE,
+  allowedImageTypes: process.env.ALLOWED_IMAGE_TYPES.split(","),
+  allowedDocumentTypes: process.env.ALLOWED_DOCUMENT_TYPES.split(","),
+  allowedCompressionTypes: process.env.ALLOWED_COMPRESSION_TYPES.split(","),
 };

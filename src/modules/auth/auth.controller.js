@@ -7,6 +7,7 @@ import {
   registerService,
   resetPasswordService,
   updateProfileService,
+  uploadAvatarService,
   verifyRefreshToken,
   verifyResetPasswordCodeService,
 } from "./auth.service.js";
@@ -79,7 +80,7 @@ export const login = expressAsyncHandler(async (req, res) => {
 export const createAccessToken = expressAsyncHandler(async (req, res) => {
   const refreshToken =
     req.cookies?.refreshToken ||
-    req.headers.authorization?.replace("Bearer ", "");
+    req.body.refreshToken;
   const accessToken = await verifyRefreshToken(refreshToken);
 
   res.cookie("accessToken", accessToken, {
@@ -116,6 +117,14 @@ export const getCurrentUser = expressAsyncHandler(async (req, res) => {
 export const updateProfile = expressAsyncHandler(async (req, res) => {
   const user = await updateProfileService(req.userId, req.body);
   res.status(200).json(successResponse(user, "User updated successfully"));
+});
+
+// @desc     Upload avatar
+// @route    PUT /auth/uploadAvatar
+// @access   Private
+export const uploadAvatar = expressAsyncHandler(async (req, res) => {
+  const user = await uploadAvatarService(req.userId, req.file);
+  res.status(200).json(successResponse(user, "Avatar uploaded successfully"));
 });
 
 // @desc     Change current user password

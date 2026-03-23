@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import Project from "../../DB/models/project.model.js";
 import User from "../../DB/models/user.model.js";
 import {
@@ -5,6 +6,7 @@ import {
   createForbiddenError,
   createNotFoundError,
 } from "../../utils/APIErrors.js";
+import { getPagination, getPaginationMetadata } from "../../utils/pagination.js";
 
 export const createProjectService = async (ownerId, projectData) => {
   const project = await Project.create({
@@ -19,9 +21,117 @@ export const createProjectService = async (ownerId, projectData) => {
 export const getAllProjectsService = async (userId) => {
   const projects = await Project.find({
     $or: [{ owner: userId }, { "members.user": userId }],
-  }).populate("owner", "name email avatar");
+  })
+    .populate("owner", "name email avatar")
+    .populate("members.user", "name email avatar");
 
   return projects;
+};
+
+export const getMyProjectsService = async (userId, query = {}) => {
+  const { page, limit } = query;
+  const pagination = getPagination(page, limit);
+
+  const matchStage = {
+    $match: {
+      $or: [
+        { owner: new mongoose.Types.ObjectId(userId) },
+        { "members.user": new mongoose.Types.ObjectId(userId) },
+      ],
+    },
+  };
+
+  const lookupTasksStage = {
+    $lookup: {
+      from: "tasks",
+      localField: "_id",
+      foreignField: "project",
+      as: "tasks",
+    },
+  };
+
+  const lookupOwnerStage = {
+    $lookup: {
+      from: "users",
+      localField: "owner",
+      foreignField: "_id",
+      as: "owner",
+    },
+  };
+
+  const unwindOwnerStage = {
+    $unwind: "$owner",
+  };
+
+  const addFieldsStage = {
+    $addFields: {
+      totalTasks: { $size: "$tasks" },
+      completedTasks: {
+        $size: {
+          $filter: {
+            input: "$tasks",
+            as: "task",
+            cond: { $eq: ["$$task.status", "done"] },
+          },
+        },
+      },
+    },
+  };
+
+  const progressStage = {
+    $addFields: {
+      progressPercentage: {
+        $cond: {
+          if: { $gt: ["$totalTasks", 0] },
+          then: {
+            $multiply: [{ $divide: ["$completedTasks", "$totalTasks"] }, 100],
+          },
+          else: 0,
+        },
+      },
+    },
+  };
+
+  const projectStage = {
+    $project: {
+      title: 1,
+      description: 1,
+      status: 1,
+      "owner.name": 1,
+      "owner.email": 1,
+      "owner.avatar": 1,
+      totalTasks: 1,
+      completedTasks: 1,
+      progressPercentage: 1,
+      createdAt: 1,
+    },
+  };
+
+  const pipeline = [
+    matchStage,
+    lookupTasksStage,
+    lookupOwnerStage,
+    unwindOwnerStage,
+    addFieldsStage,
+    progressStage,
+    projectStage,
+    {
+      $facet: {
+        metadata: [{ $count: "total" }],
+        data: [{ $skip: pagination.skip }, { $limit: pagination.limit }],
+      },
+    },
+  ];
+
+  const result = await Project.aggregate(pipeline);
+
+  const total = result[0].metadata[0] ? result[0].metadata[0].total : 0;
+  const metadata = getPaginationMetadata(total, pagination.page, pagination.limit);
+
+  return {
+    projects: result[0].data,
+    ...metadata,
+  };
 };
 
 export const getProjectByIdService = async (userId, projectId) => {

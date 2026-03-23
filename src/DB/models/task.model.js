@@ -8,7 +8,7 @@ const taskSchema = new mongoose.Schema(
             required: true,
             trim: true,
             minlength: 3,
-            maxlength: 100,
+            maxLength: 100,
         },
 
         description: {
@@ -20,13 +20,13 @@ const taskSchema = new mongoose.Schema(
 
         status: {
             type: String,
-            enum: ["to-do", "in-progress", "done", "archived"],
+            enum: ["to-do", "in-progress", "review", "completed", "important", "upcoming"],
             default: "to-do",
         },
 
         priority: {
             type: String,
-            enum: ["low", "medium", "high", "critical"],
+            enum: ["low", "medium", "high", "urgent"],
             default: "medium",
         },
 
@@ -50,6 +50,35 @@ const taskSchema = new mongoose.Schema(
         dueDate: {
             type: Date,
         },
+
+        attachments: [
+            {
+                url: {
+                    type: String,
+                    required: true,
+                },
+                publicId: {
+                    type: String,
+                    required: true,
+                },
+                originalName: {
+                    type: String,
+                    required: true,
+                },
+                type: {
+                    type: String,
+                    required: true,
+                },
+                size: {
+                    type: Number,
+                    required: true,
+                },
+                uploadedAt: {
+                    type: Date,
+                    default: Date.now,
+                },
+            },
+        ],
     },
     {
         timestamps: true,
