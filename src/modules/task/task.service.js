@@ -6,7 +6,7 @@ import {
     createForbiddenError,
     createNotFoundError,
 } from "../../utils/APIErrors.js";
-import { getPagination, getPaginationMetadata } from "../../utils/pagination.js";
+import Features from "../../utils/features.js";
 import { uploadToCloudinary, deleteFromCloudinary } from "../../utils/uploadFiles.js";
 
 const checkProjectAccess = async (userId, projectId) => {
@@ -55,20 +55,20 @@ export const createTaskService = async (userId, taskData) => {
     return task;
 };
 
-export const getAllTasksService = async (userId, queryOptions = {}) => {
-    const { projectId } = queryOptions;
-    let filter = {};
+export const getAllTasksService = async (userId, query = {}) => {
+    const { projectId, ...queryForFeatures } = query;
+    let accessFilter;
 
     if (projectId) {
         await checkProjectAccess(userId, projectId);
-        filter.project = projectId;
+        accessFilter = { project: projectId };
     } else {
         const projects = await Project.find({
             $or: [{ owner: userId }, { "members.user": userId }],
         }).select("_id");
 
         const projectIds = projects.map((p) => p._id);
-        filter = {
+        accessFilter = {
             $or: [
                 { project: { $in: projectIds } },
                 { createdBy: userId },
@@ -77,44 +77,76 @@ export const getAllTasksService = async (userId, queryOptions = {}) => {
         };
     }
 
-    const tasks = await Task.find(filter)
+    const feature = new Features(Task.find(accessFilter), queryForFeatures)
+        .filter()
+        .sort()
+        .limitFields()
+        .search("task");
+
+    const documentsCount = await Task.countDocuments(
+        feature.mongooseQuery.getFilter(),
+    );
+    feature.pagination(documentsCount);
+
+    const tasks = await feature.mongooseQuery
         .populate("project", "title status")
         .populate("assignee", "name email avatar")
         .populate("createdBy", "name email avatar");
 
-    return tasks;
+    return {
+        tasks,
+        length: documentsCount,
+        metadata: feature.paginationResult,
+    };
 };
 
 export const getMyTasksService = async (userId, query = {}) => {
-    const { status, priority, projectId, search, page, limit } = query;
-    const pagination = getPagination(page, limit);
+    const { projectId, ...queryForFeatures } = query;
 
-    let filter = {
-        $or: [
-            { createdBy: userId },
-            { assignee: userId },
-        ],
-    };
+    let accessFilter;
+    if (projectId) {
+        accessFilter = {
+            $and: [
+                {
+                    $or: [
+                        { createdBy: userId },
+                        { assignee: userId },
+                    ],
+                },
+                { project: projectId },
+            ],
+        };
+    } else {
+        accessFilter = {
+            $or: [{ createdBy: userId }, { assignee: userId }],
+        };
+    }
 
-    if (status) filter.status = status;
-    if (priority) filter.priority = priority;
-    if (projectId) filter.project = projectId;
-    if (search) filter.title = { $regex: search, $options: "i" };
+    const feature = new Features(
+        Task.find(accessFilter).select(
+            "title description status priority project assignee createdBy createdAt",
+        ),
+        queryForFeatures,
+    )
+        .filter()
+        .sort()
+        .limitFields()
+        .search("task");
 
-    const tasks = await Task.find(filter)
+    const documentsCount = await Task.countDocuments(
+        feature.mongooseQuery.getFilter(),
+    );
+    feature.pagination(documentsCount);
+
+    const tasks = await feature.mongooseQuery
         .populate("project", "title status")
         .populate("assignee", "name email avatar")
-        .select("title description status priority project assignee createdAt")
-        .skip(pagination.skip)
-        .limit(pagination.limit)
-        .lean();
-
-    const totalCount = await Task.countDocuments(filter);
-    const metadata = getPaginationMetadata(totalCount, pagination.page, pagination.limit);
+        .populate("createdBy", "name email avatar");
 
     return {
         tasks,
-        ...metadata,
+        length: documentsCount,
+        metadata: feature.paginationResult,
     };
 };
 

@@ -21,8 +21,6 @@ export const createUserValidator = Joi.object({
 
 });
 
-
-
 export const updateUserValidator = Joi.object({
   
    body: Joi.object({
