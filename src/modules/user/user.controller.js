@@ -1,38 +1,30 @@
 import expressAsyncHandler from "express-async-handler";
 import * as userServices from "./user.service.js";
-import {successResponse,createResponse} from "../../utils/APIResponse.js"
-
+import {successResponse, createResponse} from "../../utils/APIResponse.js"
 
 // @desc addUser
 // @route post/users/
-// @access public
+// @access private
 export const addUser = expressAsyncHandler(async (req, res) => {
-    const user = await userServices.adduserServices(req.body);
+    const user = await userServices.addUserService(req.body);
 
     res.status(200).json(createResponse(user,"user created successfully")); 
-
-    // "user created successfully", user
-  
 });
 
-// @desc fetchusers
-// @route Get/users/allusers
-// @access public
+// @desc getAllUsers
+// @route Get/users
+// @access private
+export const getAllUsers = expressAsyncHandler(async (req, res) => {
+  const data = await userServices.getAllUsersService(req.query);
 
-export const Getallusers = expressAsyncHandler(async (req, res) => {
-  const user = await userServices.getallusersservice();
-
-  res.status(200).json(successResponse(user, "user retreived successfully"));
-
-  //"user retreived successfully", user 
+  res.status(200).json(successResponse(data, "users retrieved successfully"));
 });
 
-// @desc fetchuserbyid
+// @desc getUser
 // @route post/users/:id
-// @access public
-
-export const Getuser = expressAsyncHandler(async (req, res) => {
-    const user = await userServices.getuserbyidservice(req.params.id);
+// @access private
+export const getUser = expressAsyncHandler(async (req, res) => {
+    const user = await userServices.getUserService(req.params.id);
 
     if (!user) {
       return res.status(404).json({ message: "User not found" });
@@ -42,30 +34,27 @@ export const Getuser = expressAsyncHandler(async (req, res) => {
   
 });
 
-// @desc updateuserdata
+// @desc updateUser
 // @route put/users/:id
-// @access public
-
-export const Updateuser = expressAsyncHandler(async (req, res) => {
+// @access private
+export const updateUser = expressAsyncHandler(async (req, res) => {
     const { id } = req.params;
     const userData = req.body;
-    const user = await userServices.updateuserServices(id, userData);
-    // .select("-password");
+    const user = await userServices.updateUserService(id, userData);
 
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
 
-    res.status(200).json(successResponse(user, "User updated" ));
-    //message: "User updated", user
+    res.status(200).json(successResponse(user, "User updated successfully" ));
   
 });
 
-// @desc deleteuserdata
+// @desc deleteUser
 // @route delete/users/:id
-// @access public
-export const deleteuser = expressAsyncHandler(async (req, res) => {
-    const user = await userServices.deleteuserServices(req.params.id);
+// @access private
+export const deleteUser = expressAsyncHandler(async (req, res) => {
+    const user = await userServices.deleteUserService(req.params.id);
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }

@@ -4,7 +4,6 @@ const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^\w\s]).{8,}$/;
 
 export const createUserValidator = Joi.object({ 
 
-
   body: Joi.object({
       name: Joi.string().min(3).max(100).trim().required(),
       email: Joi.string().email().lowercase().trim().required(),
@@ -26,8 +25,6 @@ export const createUserValidator = Joi.object({
 
 export const updateUserValidator = Joi.object({
   
-
-
    body: Joi.object({
       name: Joi.string().min(3).max(100).trim().optional(),
       email:Joi.string().required(),

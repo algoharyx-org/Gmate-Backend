@@ -7,6 +7,8 @@ import {
     getMyTasks,
     getTaskById,
     updateTask,
+    uploadTaskAttachments,
+    deleteTaskAttachment,
 } from "./task.controller.js";
 import { authentication } from "../../middlewares/authentication.js";
 import Validate from "../../middlewares/validate.js";
@@ -16,6 +18,7 @@ import {
     getMyTasksValidation,
     updateTaskValidation,
 } from "./task.validator.js";
+import { uploadMultiple } from "../../middlewares/upload.js";
 
 const taskRouter = Router();
 
@@ -48,6 +51,19 @@ taskRouter.patch(
     authentication,
     Validate(assignTaskValidation),
     assignTask
+);
+
+taskRouter.post(
+    "/:id/attachments",
+    authentication,
+    uploadMultiple("attachments"),
+    uploadTaskAttachments
+);
+
+taskRouter.delete(
+    "/:id/attachments/:attachmentId",
+    authentication,
+    deleteTaskAttachment
 );
 
 taskRouter.delete("/:id", authentication, deleteTask);

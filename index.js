@@ -2,6 +2,7 @@ import express from 'express';
 import dbConnection from './src/DB/dbConnection.js';
 import { config } from './src/config/env.js';
 import bootstrap from './src/main.js';
+import qs from 'qs';
 
 const app = express();
 

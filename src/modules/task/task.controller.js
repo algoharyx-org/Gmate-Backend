@@ -7,6 +7,8 @@ import {
     getMyTasksService,
     getTaskByIdService,
     updateTaskService,
+    uploadTaskAttachmentsService,
+    deleteTaskAttachmentService,
 } from "./task.service.js";
 import { createResponse, successResponse } from "../../utils/APIResponse.js";
 
@@ -87,4 +89,32 @@ export const assignTask = expressAsyncHandler(async (req, res) => {
     res
         .status(200)
         .json(successResponse(task, "Task assigned successfully"));
+});
+
+// @desc     Upload attachments to a task
+// @route    POST /tasks/:id/attachments
+// @access   Private
+export const uploadTaskAttachments = expressAsyncHandler(async (req, res) => {
+    const task = await uploadTaskAttachmentsService(
+        req.userId,
+        req.params.id,
+        req.files
+    );
+    res
+        .status(200)
+        .json(successResponse(task, "Attachments uploaded successfully"));
+});
+
+// @desc     Delete an attachment from a task
+// @route    DELETE /tasks/:id/attachments/:attachmentId
+// @access   Private
+export const deleteTaskAttachment = expressAsyncHandler(async (req, res) => {
+    const task = await deleteTaskAttachmentService(
+        req.userId,
+        req.params.id,
+        req.params.attachmentId
+    );
+    res
+        .status(200)
+        .json(successResponse(task, "Attachment deleted successfully"));
 });
