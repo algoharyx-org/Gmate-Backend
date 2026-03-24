@@ -32,6 +32,7 @@ export const TASK_STATUS = {
   COMPLETED: "completed",
   IMPORTANT: "important",
   UPCOMING: "upcoming",
+  OVERDUE: "overdue",
 };
 
 export const TASK_PRIORITY = {

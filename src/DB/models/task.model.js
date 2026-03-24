@@ -26,6 +26,7 @@ const taskSchema = new mongoose.Schema(
         "completed",
         "important",
         "upcoming",
+        "overdue",
       ],
       default: "to-do",
     },
