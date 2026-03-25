@@ -155,7 +155,7 @@ export const getMyProjectsService = async (userId, query = {}) => {
           $filter: {
             input: "$tasks",
             as: "task",
-            cond: { $eq: ["$$task.status", "done"] },
+            cond: { $eq: ["$$task.status", "completed"] },
           },
         },
       },
