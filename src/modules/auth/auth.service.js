@@ -206,3 +206,15 @@ export const resetPasswordService = async (resetToken, password) => {
 
   return true;
 };
+
+export const changeActiveService = async (userId) => {
+  const user = await User.findById(userId);
+  if (!user) {
+    throw createNotFoundError("User not found");
+  }
+
+  user.active = !user.active;
+  await user.save();
+
+  return user;
+};

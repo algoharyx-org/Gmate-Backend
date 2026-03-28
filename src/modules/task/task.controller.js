@@ -82,7 +82,7 @@ export const assignTask = expressAsyncHandler(async (req, res) => {
     const task = await assignTaskService(
         req.userId,
         req.params.id,
-        req.body.assignee
+        req.body
     );
     res
         .status(200)

@@ -1,7 +1,8 @@
 import Task from "../../DB/models/task.model.js";
 import Project from "../../DB/models/project.model.js";
 import User from "../../DB/models/user.model.js";
-import { TASK_STATUS } from "../../config/constants.js";
+import { NOTIFICATION_TYPE, TASK_STATUS } from "../../config/constants.js";
+import { dispatchNotification } from "../../utils/dispatchNotification.js";
 import {
   createBadRequestError,
   createForbiddenError,
@@ -34,27 +35,42 @@ const checkProjectAccess = async (userId, projectId) => {
 export const createTaskService = async (userId, taskData) => {
   const { project: projectId, assignee } = taskData;
 
-  await checkProjectAccess(userId, projectId);
+  if (projectId) {
+    await checkProjectAccess(userId, projectId);
+  }
 
   if (assignee) {
     const assigneeUser = await User.findById(assignee);
     if (!assigneeUser) {
       throw createNotFoundError("Assignee not found");
     }
-    const project = await Project.findById(projectId);
-    const isAssigneeOwner = project.owner.toString() === assignee;
-    const isAssigneeMember = project.members.some(
-      (m) => m.user.toString() === assignee,
-    );
+    if (projectId) {
+      const project = await Project.findById(projectId);
+      const isAssigneeOwner = project.owner.toString() === assignee;
+      const isAssigneeMember = project.members.some(
+        (m) => m.user.toString() === assignee,
+      );
 
-    if (!isAssigneeOwner && !isAssigneeMember) {
-      throw createBadRequestError("Assignee must be a member of the project");
+      if (!isAssigneeOwner && !isAssigneeMember) {
+        throw createBadRequestError("Assignee must be a member of the project");
+      }
     }
   }
   const task = await Task.create({
     ...taskData,
     createdBy: userId,
   });
+
+  if (assignee && String(assignee) !== String(userId)) {
+    await dispatchNotification({
+      recipientId: assignee,
+      type: NOTIFICATION_TYPE.TASK_ASSIGNED,
+      title: "Task assigned to you",
+      body: `You were assigned: "${task.title}".`,
+      taskId: task._id,
+      projectId: task.project,
+    });
+  }
 
   return task;
 };
@@ -162,7 +178,20 @@ export const getTaskByIdService = async (userId, taskId) => {
     throw createNotFoundError("Task not found");
   }
 
-  await checkProjectAccess(userId, task.project._id);
+  if (task.project) {
+    await checkProjectAccess(userId, task.project._id);
+  } else {
+    const isCreator =
+      task.createdBy?._id?.toString() === userId ||
+      task.createdBy?.toString() === userId;
+    const isAssignee =
+      task.assignee?._id?.toString() === userId ||
+      task.assignee?.toString() === userId;
+
+    if (!isCreator && !isAssignee) {
+      throw createForbiddenError("You are not authorized to access this task");
+    }
+  }
 
   return task;
 };
@@ -174,11 +203,17 @@ export const updateTaskService = async (userId, taskId, updateData) => {
     throw createNotFoundError("Task not found");
   }
 
-  const project = await checkProjectAccess(userId, task.project);
-  const isOwner = project.owner.toString() === userId;
-  const isManager = project.members.some(
-    (m) => m.user.toString() === userId && m.role === "manager",
-  );
+  let isOwner = false;
+  let isManager = false;
+
+  if (task.project) {
+    const project = await checkProjectAccess(userId, task.project);
+    isOwner = project.owner.toString() === userId;
+    isManager = project.members.some(
+      (m) => m.user.toString() === userId && m.role === "manager",
+    );
+  }
+
   const isCreator = task.createdBy.toString() === userId;
   const isAssignee = task.assignee?.toString() === userId;
 
@@ -186,7 +221,8 @@ export const updateTaskService = async (userId, taskId, updateData) => {
     throw createForbiddenError("You are not authorized to update this task");
   }
 
-  if (updateData.assignee) {
+  if (updateData.assignee && task.project) {
+    const project = await Project.findById(task.project);
     const isAssigneeOwner = project.owner.toString() === updateData.assignee;
     const isAssigneeMember = project.members.some(
       (m) => m.user.toString() === updateData.assignee,
@@ -195,6 +231,8 @@ export const updateTaskService = async (userId, taskId, updateData) => {
       throw createBadRequestError("Assignee must be a member of the project");
     }
   }
+
+  const prevAssigneeId = task.assignee?.toString() ?? null;
 
   let payload = updateData;
   if (task.status === TASK_STATUS.OVERDUE && updateData.dueDate !== undefined) {
@@ -215,6 +253,20 @@ export const updateTaskService = async (userId, taskId, updateData) => {
     .populate("assignee", "name email avatar")
     .populate("createdBy", "name email avatar");
 
+  if (updateData.assignee !== undefined && updatedTask) {
+    const nextId = updatedTask.assignee?.toString() ?? null;
+    if (nextId && nextId !== prevAssigneeId && nextId !== String(userId)) {
+      await dispatchNotification({
+        recipientId: nextId,
+        type: NOTIFICATION_TYPE.TASK_ASSIGNED,
+        title: "Task assigned to you",
+        body: `You were assigned: "${updatedTask.title}".`,
+        taskId: updatedTask._id,
+        projectId: updatedTask.project,
+      });
+    }
+  }
+
   return updatedTask;
 };
 
@@ -225,12 +277,17 @@ export const deleteTaskService = async (userId, taskId) => {
     throw createNotFoundError("Task not found");
   }
 
-  const project = await checkProjectAccess(userId, task.project);
+  let isOwner = false;
+  let isManager = false;
 
-  const isOwner = project.owner.toString() === userId;
-  const isManager = project.members.some(
-    (m) => m.user.toString() === userId && m.role === "manager",
-  );
+  if (task.project) {
+    const project = await checkProjectAccess(userId, task.project);
+    isOwner = project.owner.toString() === userId;
+    isManager = project.members.some(
+      (m) => m.user.toString() === userId && m.role === "manager",
+    );
+  }
+
   const isCreator = task.createdBy.toString() === userId;
 
   if (!isOwner && !isManager && !isCreator) {
@@ -242,41 +299,71 @@ export const deleteTaskService = async (userId, taskId) => {
   return { id: taskId };
 };
 
-export const assignTaskService = async (userId, taskId, assigneeId) => {
+export const assignTaskService = async (userId, taskId, assignee) => {
   const task = await Task.findById(taskId);
 
   if (!task) {
     throw createNotFoundError("Task not found");
   }
 
-  const project = await checkProjectAccess(userId, task.project);
-  const isOwner = project.owner.toString() === userId;
-  const isManager = project.members.some(
-    (m) => m.user.toString() === userId && m.role === "manager",
-  );
+  let isOwner = false;
+  let isManager = false;
+
+  if (task.project) {
+    const project = await checkProjectAccess(userId, task.project);
+    isOwner = project.owner.toString() === userId;
+    isManager = project.members.some(
+      (m) => m.user.toString() === userId && m.role === "manager",
+    );
+  }
+
   const isCreator = task.createdBy.toString() === userId;
 
   if (!isOwner && !isManager && !isCreator) {
     throw createForbiddenError("You are not authorized to assign this task");
   }
 
-  const isAssigneeOwner = project.owner.toString() === assigneeId;
-  const isAssigneeMember = project.members.some(
-    (m) => m.user.toString() === assigneeId,
-  );
+  const assigneeId = await User.findOne({ email: assignee.email });
 
-  if (!isAssigneeOwner && !isAssigneeMember) {
-    throw createBadRequestError("Assignee must be a member of the project");
+  if (!assigneeId) {
+    throw createNotFoundError("Assignee not found");
+  }
+
+  if (task.project) {
+    const project = await Project.findById(task.project);
+    const isAssigneeOwner =
+      project.owner.toString() === assigneeId._id.toString();
+    const isAssigneeMember = project.members.some(
+      (m) => m.user.toString() === assigneeId._id.toString(),
+    );
+
+    if (!isAssigneeOwner && !isAssigneeMember) {
+      throw createBadRequestError("Assignee must be a member of the project");
+    }
   }
 
   const updatedTask = await Task.findByIdAndUpdate(
     taskId,
-    { assignee: assigneeId },
+    { assignee: assigneeId._id },
     { new: true },
   )
     .populate("project", "title status")
     .populate("assignee", "name email avatar")
     .populate("createdBy", "name email avatar");
+
+  if (
+    String(assigneeId._id) !== String(userId) &&
+    String(task.assignee ?? "") !== String(assigneeId._id)
+  ) {
+    await dispatchNotification({
+      recipientId: assigneeId._id,
+      type: NOTIFICATION_TYPE.TASK_ASSIGNED,
+      title: "Task assigned to you",
+      body: `You were assigned: "${task.title}".`,
+      taskId: updatedTask._id,
+      projectId: updatedTask.project,
+    });
+  }
 
   return updatedTask;
 };
@@ -291,7 +378,16 @@ export const uploadTaskAttachmentsService = async (userId, taskId, files) => {
     throw createNotFoundError("Task not found");
   }
 
-  await checkProjectAccess(userId, task.project);
+  if (task.project) {
+    await checkProjectAccess(userId, task.project);
+  } else {
+    const isCreator = task.createdBy.toString() === userId;
+    const isAssignee = task.assignee?.toString() === userId;
+
+    if (!isCreator && !isAssignee) {
+      throw createForbiddenError("You are not authorized to modify this task");
+    }
+  }
 
   // Upload all files to Cloudinary in parallel
   const uploadPromises = files.map((file) =>
@@ -303,13 +399,11 @@ export const uploadTaskAttachmentsService = async (userId, taskId, files) => {
   const attachments = uploadResults.map((result, index) => ({
     url: result.url,
     publicId: result.publicId,
-    originalName: files[index].originalname,
-    type: result.type,
-    size: result.size,
   }));
 
   // Push all new attachments into the task
   task.attachments.push(...attachments);
+  task.status = "in-progress";
   await task.save();
 
   const updatedTask = await Task.findById(taskId)
@@ -330,7 +424,16 @@ export const deleteTaskAttachmentService = async (
     throw createNotFoundError("Task not found");
   }
 
-  await checkProjectAccess(userId, task.project);
+  if (task.project) {
+    await checkProjectAccess(userId, task.project);
+  } else {
+    const isCreator = task.createdBy.toString() === userId;
+    const isAssignee = task.assignee?.toString() === userId;
+
+    if (!isCreator && !isAssignee) {
+      throw createForbiddenError("You are not authorized to modify this task");
+    }
+  }
 
   const attachment = task.attachments.id(attachmentId);
   if (!attachment) {

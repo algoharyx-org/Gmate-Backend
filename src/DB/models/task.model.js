@@ -40,7 +40,6 @@ const taskSchema = new mongoose.Schema(
     project: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Project",
-      required: true,
     },
 
     assignee: {
@@ -67,7 +66,7 @@ const taskSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
-    toJson: { virtuals: true },
+    toJSON: { virtuals: true },
     toObject: { virtuals: true },
   },
 );

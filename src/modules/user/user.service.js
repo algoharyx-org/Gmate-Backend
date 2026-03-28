@@ -1,5 +1,5 @@
 import User from "../../DB/models/user.model.js";
-import { createNotFoundError ,createUnauthorizedError } from "../../utils/APIErrors.js";
+import { createNotFoundError } from "../../utils/APIErrors.js";
 import Features from "../../utils/features.js";
 
 export const addUserService = async (userData) => {
@@ -17,7 +17,13 @@ export const getAllUsersService = async (query) => {
     .search("user")
     .pagination(userCount);
   const users = await feature.mongooseQuery;
-  return {users, length: userCount, metadata: feature.paginationResult};
+  let totalPages;
+  if (users.length < feature.paginationResult.limit) {
+    totalPages = Math.ceil(users.length / feature.paginationResult.limit);
+  } else {
+    totalPages = feature.paginationResult.totalPages;
+  }
+  return {users, length: userCount, totalPages, metadata: feature.paginationResult};
 };
 
 export const getUserService = async (id) => {

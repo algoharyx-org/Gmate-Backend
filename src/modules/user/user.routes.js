@@ -5,10 +5,11 @@ import {authorization} from "../../middlewares/authorization.js";
 import { createUserValidator } from "./user.validator.js";
 import { updateUserValidator } from "./user.validator.js";
 import { addUser, deleteUser, getAllUsers, getUser, updateUser } from './user.controller.js';
+import { checkActive } from "../../middlewares/checkActive.js";
 
 const router = Router();
 
-router.use(authentication,authorization('admin'))
+router.use(authentication, checkActive, authorization('admin'))
 
 router.post("/", Validate(createUserValidator), addUser); 
 router.get("/", getAllUsers); 

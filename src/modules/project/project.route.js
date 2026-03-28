@@ -19,42 +19,40 @@ import {
   updateMemberRoleValidation,
   updateProjectValidation,
 } from "./project.validator.js";
+import { checkActive } from "../../middlewares/checkActive.js";
 
 const projectRouter = Router();
 
+projectRouter.use(authentication, checkActive)
+
 projectRouter.post(
   "/",
-  authentication,
   Validate(createProjectValidation),
   createProject,
 );
 
 projectRouter.get(
   "/me",
-  authentication,
   Validate(getMyProjectsValidation),
   getMyProjects,
 );
-projectRouter.get("/", authentication, getAllProjects);
-projectRouter.get("/:id", authentication, getProjectById);
+projectRouter.get("/", getAllProjects);
+projectRouter.get("/:id", getProjectById);
 projectRouter.put(
   "/:id",
-  authentication,
   Validate(updateProjectValidation),
   updateProject,
 );
-projectRouter.delete("/:id", authentication, deleteProject);
+projectRouter.delete("/:id", deleteProject);
 
 projectRouter.post(
   "/:id/members",
-  authentication,
   Validate(addMemberValidation),
   addMember,
 );
-projectRouter.delete("/:id/members/:memberId", authentication, removeMember);
+projectRouter.delete("/:id/members/:memberId", removeMember);
 projectRouter.patch(
   "/:id/members/:memberId",
-  authentication,
   Validate(updateMemberRoleValidation),
   updateMemberRole,
 );

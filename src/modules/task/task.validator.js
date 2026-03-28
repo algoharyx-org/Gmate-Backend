@@ -11,7 +11,7 @@ export const createTaskValidation = Joi.object({
         priority: Joi.string()
             .valid(...Object.values(TASK_PRIORITY))
             .optional(),
-        project: Joi.string().hex().length(24).required(), // Must be a valid MongoDB ObjectId
+        project: Joi.string().hex().length(24).optional(), // Must be a valid MongoDB ObjectId
         assignee: Joi.string().hex().length(24).optional(),
         dueDate: Joi.date().optional(),
     }).required(),
@@ -34,7 +34,7 @@ export const updateTaskValidation = Joi.object({
 
 export const assignTaskValidation = Joi.object({
     body: Joi.object({
-        assignee: Joi.string().hex().length(24).required(),
+        email: Joi.string().email().required(),
     }).required(),
 });
 

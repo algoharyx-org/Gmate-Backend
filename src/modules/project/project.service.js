@@ -7,6 +7,8 @@ import {
   createNotFoundError,
 } from "../../utils/APIErrors.js";
 import Features from "../../utils/features.js";
+import { NOTIFICATION_TYPE } from "../../config/constants.js";
+import { dispatchNotification } from "../../utils/dispatchNotification.js";
 
 const taskStatsByProjectIds = async (ids) => {
   if (!ids.length) return new Map();
@@ -258,6 +260,14 @@ export const addMemberService = async (userId, projectId, memberData) => {
   const updatedProject = await Project.findById(projectId)
     .populate("owner", "name email avatar")
     .populate("members.user", "name email avatar");
+
+  await dispatchNotification({
+    recipientId: userToAdd._id,
+    type: NOTIFICATION_TYPE.PROJECT_MEMBER_ADDED,
+    title: "Added to project",
+    body: `You were added to project "${updatedProject.title}".`,
+    projectId: updatedProject._id,
+  });
 
   return updatedProject;
 };
