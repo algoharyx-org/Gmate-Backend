@@ -6,6 +6,7 @@ export const config = {
   nodeEnv: process.env.NODE_ENV,
   port: process.env.PORT,
   dbUrl: process.env.DB_URL,
+  overdueCronSchedule: process.env.OVERDUE_CRON_SCHEDULE || "*/15 * * * *",
   jwtSecret: process.env.JWT_SECRET,
   jwtExpiresIn: process.env.JWT_EXPIRES_IN,
   jwtRefreshExpiresIn: process.env.JWT_REFRESH_EXPIRES_IN,

@@ -32,6 +32,7 @@ export const TASK_STATUS = {
   COMPLETED: "completed",
   IMPORTANT: "important",
   UPCOMING: "upcoming",
+  OVERDUE: "overdue",
 };
 
 export const TASK_PRIORITY = {
@@ -39,4 +40,11 @@ export const TASK_PRIORITY = {
   MEDIUM: "medium",
   HIGH: "high",
   CRITICAL: "urgent",
+};
+
+export const NOTIFICATION_TYPE = {
+  TASK_ASSIGNED: "task_assigned",
+  TASK_OVERDUE: "task_overdue",
+  TASK_COMMENT: "task_comment",
+  PROJECT_MEMBER_ADDED: "project_member_added",
 };

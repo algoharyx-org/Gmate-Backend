@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+
 const commentSchema = new mongoose.Schema({
     content: {
         type: String,
@@ -15,14 +16,7 @@ const commentSchema = new mongoose.Schema({
         ref: 'Task',
         required: true
     }
-},{ timestamps: true 
-
-});
-
-
-
-
-const Comment = mongoose.model("Comment", commentSchema);
+}, { timestamps: true });
 
 const Comment = mongoose.model('Comment', commentSchema);
 

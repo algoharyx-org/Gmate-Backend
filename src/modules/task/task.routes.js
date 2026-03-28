@@ -19,53 +19,50 @@ import {
     updateTaskValidation,
 } from "./task.validator.js";
 import { uploadMultiple } from "../../middlewares/upload.js";
+import { checkActive } from "../../middlewares/checkActive.js";
 
 const taskRouter = Router();
 
+taskRouter.use(authentication, checkActive)
+
 taskRouter.post(
     "/",
-    authentication,
     Validate(createTaskValidation),
     createTask
 );
 
 taskRouter.get(
     "/me",
-    authentication,
     Validate(getMyTasksValidation),
     getMyTasks
 );
-taskRouter.get("/", authentication, getAllTasks);
+taskRouter.get("/", getAllTasks);
 
-taskRouter.get("/:id", authentication, getTaskById);
+taskRouter.get("/:id", getTaskById);
 
 taskRouter.put(
     "/:id",
-    authentication,
     Validate(updateTaskValidation),
     updateTask
 );
 
 taskRouter.patch(
     "/:id/assign",
-    authentication,
     Validate(assignTaskValidation),
     assignTask
 );
 
 taskRouter.post(
     "/:id/attachments",
-    authentication,
     uploadMultiple("attachments"),
     uploadTaskAttachments
 );
 
 taskRouter.delete(
     "/:id/attachments/:attachmentId",
-    authentication,
     deleteTaskAttachment
 );
 
-taskRouter.delete("/:id", authentication, deleteTask);
+taskRouter.delete("/:id", deleteTask);
 
 export default taskRouter;

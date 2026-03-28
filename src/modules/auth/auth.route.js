@@ -1,5 +1,6 @@
 import { Router } from "express";
 import {
+  changeActive,
   changeUserPassword,
   createAccessToken,
   forgotPassword,
@@ -25,6 +26,7 @@ import {
   verifyResetPasswordCodeValidation,
 } from "./auth.validator.js";
 import { uploadSingle } from "../../middlewares/upload.js";
+import { authorization } from "../../middlewares/authorization.js";
 
 const authRouter = Router();
 
@@ -73,6 +75,13 @@ authRouter.put(
   authentication,
   Validate(resetPasswordValidation),
   resetPassword,
+);
+
+authRouter.put(
+  "/changeActive/:id",
+  authentication,
+  authorization("admin"),
+  changeActive,
 );
 
 export default authRouter;

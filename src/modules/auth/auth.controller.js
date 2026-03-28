@@ -1,5 +1,6 @@
 import expressAsyncHandler from "express-async-handler";
 import {
+  changeActiveService,
   changeUserPasswordService,
   forgotPasswordService,
   getCurrentUserService,
@@ -177,4 +178,12 @@ export const resetPassword = expressAsyncHandler(async (req, res) => {
   const password = req.body.password;
   await resetPasswordService(resetToken, password);
   res.status(200).json(successResponse({}, "Password reset successfully"));
+});
+
+// @desc     Change user active
+// @route    PUT /auth/changeActive/:id
+// @access   Private
+export const changeActive = expressAsyncHandler(async (req, res) => {
+  const user = await changeActiveService(req.params.id);
+  res.status(200).json(successResponse(user, "User active changed successfully"));
 });

@@ -15,55 +15,38 @@ import {
   updateCommentValidation,
   deleteCommentValidation,
 } from "./comment.validator.js";
+import { checkActive } from "../../middlewares/checkActive.js";
 
 const commentRouter = Router();
 
-// @desc     Add a new comment
-// @route    POST /comments
-// @access   Private
+commentRouter.use(authentication, checkActive)
+
 commentRouter.post(
   "/",
-  authentication,
   Validate(addCommentValidation),
   addComment
 );
 
-// @desc     Get task comments
-// @route    GET /comments/:taskId
-// @access   Private
 commentRouter.get(
-  "/:taskId",
-  authentication,
+  "/task/:taskId",
   Validate(getCommentsValidation),
   getComments
 );
 
-// @desc     Get one comment
-// @route    GET /comments/one/:commentId
-// @access   Private
 commentRouter.get(
-  "/one/:commentId",
-  authentication,
+  "/:commentId",
   Validate(getOneCommentValidation),
   getCommentById
 );
 
-// @desc     Update comment
-// @route    PUT /comments/:commentId
-// @access   Private
 commentRouter.put(
   "/:commentId",
-  authentication,
   Validate(updateCommentValidation),
   updateComment
 );
 
-// @desc     Delete comment
-// @route    DELETE /comments/:commentId
-// @access   Private
 commentRouter.delete(
   "/:commentId",
-  authentication,
   Validate(deleteCommentValidation),
   deleteComment
 );

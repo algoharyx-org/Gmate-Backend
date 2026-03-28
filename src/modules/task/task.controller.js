@@ -21,7 +21,7 @@ export const createTask = expressAsyncHandler(async (req, res) => {
     res.status(201).json(createResponse(task, "Task created successfully"));
 });
 
-// @desc     Get my tasks (with filtering, search and pagination)
+// @desc     Get my tasks (filter, sort, search, fields, pagination)
 // @route    GET /tasks/me
 // @access   Private
 export const getMyTasks = expressAsyncHandler(async (req, res) => {
@@ -31,16 +31,14 @@ export const getMyTasks = expressAsyncHandler(async (req, res) => {
         .json(successResponse(result, "Tasks retrieved successfully"));
 });
 
-// @desc     Get all tasks
+// @desc     Get all tasks (filter, sort, search, field selection, pagination)
 // @route    GET /tasks
-// @access   Private 
+// @access   Private
 export const getAllTasks = expressAsyncHandler(async (req, res) => {
-    const { projectId } = req.query;
-
-    const tasks = await getAllTasksService(req.userId, { projectId });
+    const data = await getAllTasksService(req.userId, req.query);
     res
         .status(200)
-        .json(successResponse(tasks, "Tasks retrieved successfully"));
+        .json(successResponse(data, "Tasks retrieved successfully"));
 });
 
 // @desc     Get a specific task by its ID
@@ -84,7 +82,7 @@ export const assignTask = expressAsyncHandler(async (req, res) => {
     const task = await assignTaskService(
         req.userId,
         req.params.id,
-        req.body.assignee
+        req.body
     );
     res
         .status(200)

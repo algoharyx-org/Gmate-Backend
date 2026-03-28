@@ -1,16 +1,39 @@
-import Comment from '../../DB/models/comment.model.js';
-import { 
-    createNotFoundError, 
-    createForbiddenError 
+import Comment from "../../DB/models/comment.model.js";
+import Task from "../../DB/models/task.model.js";
+import { NOTIFICATION_TYPE } from "../../config/constants.js";
+import { dispatchNotification } from "../../utils/dispatchNotification.js";
+import {
+  createNotFoundError,
+  createForbiddenError,
 } from "../../utils/APIErrors.js";
 
-/**
- * @desc    Create a new comment
- * @param   {Object} data - Comment data (content, taskId, createdBy)
- * @returns {Promise<Object>} The created comment
- */
 export const createCommentService = async (data) => {
-    return await Comment.create(data);
+  const comment = await Comment.create(data);
+  const task = await Task.findById(data.taskId).select(
+    "title assignee createdBy project",
+  );
+  if (!task) {
+    return comment;
+  }
+  const authorId = String(data.createdBy);
+  const recipients = new Set();
+  if (task.assignee && String(task.assignee) !== authorId) {
+    recipients.add(String(task.assignee));
+  }
+  if (task.createdBy && String(task.createdBy) !== authorId) {
+    recipients.add(String(task.createdBy));
+  }
+  for (const rid of recipients) {
+    await dispatchNotification({
+      recipientId: rid,
+      type: NOTIFICATION_TYPE.TASK_COMMENT,
+      title: "New comment on task",
+      body: `Someone commented on "${task.title}".`,
+      taskId: task._id,
+      projectId: task.project,
+    });
+  }
+  return comment;
 };
 
 /**

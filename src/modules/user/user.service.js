@@ -1,28 +1,32 @@
 import User from "../../DB/models/user.model.js";
-import { createNotFoundError ,createUnauthorizedError } from "../../utils/APIErrors.js";
-import bcrypt from "bcrypt";
-// post adduser
+import { createNotFoundError } from "../../utils/APIErrors.js";
+import Features from "../../utils/features.js";
 
-export const adduserservice = async (userData) => {
+export const addUserService = async (userData) => {
   const user = await User.create(userData);
 
-  if(!user){
-    throw createNotFoundError("user not added successfully")
+  return user;
+};
+
+export const getAllUsersService = async (query) => {
+  const userCount = await User.countDocuments();
+  const feature = new Features(User.find(), query)
+    .filter()
+    .sort()
+    .limitFields()
+    .search("user")
+    .pagination(userCount);
+  const users = await feature.mongooseQuery;
+  let totalPages;
+  if (users.length < feature.paginationResult.limit) {
+    totalPages = Math.ceil(users.length / feature.paginationResult.limit);
+  } else {
+    totalPages = feature.paginationResult.totalPages;
   }
-
-  return user;
+  return {users, length: userCount, totalPages, metadata: feature.paginationResult};
 };
 
-// getalluser
-
-export const getallusersservice = async () => {
-  const user = await User.find();
-  return user;
-};
-
-// get user by id
-
-export const getuserbyidservice = async (id) => {
+export const getUserService = async (id) => {
   const user = await User.findById(id).select("-password");
 
   if (!user) {
@@ -32,8 +36,7 @@ export const getuserbyidservice = async (id) => {
   return user;
 };
 
-// put
-export const updateuserservice= async (id, userData) => {
+export const updateUserService= async (id, userData) => {
   const user = await User.findByIdAndUpdate(id, userData, {
     new: true,
   });
@@ -45,7 +48,7 @@ export const updateuserservice= async (id, userData) => {
   return user;
 };
 
-export const deleteuserservice = async (id) => {
+export const deleteUserService = async (id) => {
   const user = await User.findByIdAndDelete(id);
   if(!user){
     throw createNotFoundError("user Not found");

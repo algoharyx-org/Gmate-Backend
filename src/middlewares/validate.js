@@ -30,7 +30,14 @@ const Validate = (schema) => {
       req.validated = value;
       if (value.body) req.body = value.body;
       if (value.params) req.params = value.params;
-      if (value.query) req.query = value.query;
+      if (value.query) {
+        Object.defineProperty(req, "query", {
+          value: value.query,
+          writable: true,
+          configurable: true,
+          enumerable: true,
+        });
+      }
 
       next();
     } catch (error) {

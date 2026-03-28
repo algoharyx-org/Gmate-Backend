@@ -20,7 +20,7 @@ export const createProject = expressAsyncHandler(async (req, res) => {
   res.status(201).json(createResponse(project, "Project created successfully"));
 });
 
-// @desc     Get my projects (with progress and pagination)
+// @desc     Get my projects (progress, filter, sort, search, fields, pagination)
 // @route    GET /projects/me
 // @access   Private
 export const getMyProjects = expressAsyncHandler(async (req, res) => {
@@ -30,14 +30,14 @@ export const getMyProjects = expressAsyncHandler(async (req, res) => {
     .json(successResponse(result, "Projects retrieved successfully"));
 });
 
-// @desc     Get all projects
+// @desc     Get all projects (filter, sort, search, field selection, pagination)
 // @route    GET /projects
 // @access   Private
 export const getAllProjects = expressAsyncHandler(async (req, res) => {
-  const projects = await getAllProjectsService(req.userId);
+  const data = await getAllProjectsService(req.userId, req.query);
   res
     .status(200)
-    .json(successResponse(projects, "Projects retrieved successfully"));
+    .json(successResponse(data, "Projects retrieved successfully"));
 });
 
 // @desc     Get project by id

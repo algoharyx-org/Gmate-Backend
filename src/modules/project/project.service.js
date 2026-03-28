@@ -1,12 +1,77 @@
-import mongoose from "mongoose";
 import Project from "../../DB/models/project.model.js";
+import Task from "../../DB/models/task.model.js";
 import User from "../../DB/models/user.model.js";
 import {
   createBadRequestError,
   createForbiddenError,
   createNotFoundError,
 } from "../../utils/APIErrors.js";
-import { getPagination, getPaginationMetadata } from "../../utils/pagination.js";
+import Features from "../../utils/features.js";
+import { NOTIFICATION_TYPE } from "../../config/constants.js";
+import { dispatchNotification } from "../../utils/dispatchNotification.js";
+
+const taskStatsByProjectIds = async (ids) => {
+  if (!ids.length) return new Map();
+  const stats = await Task.aggregate([
+    { $match: { project: { $in: ids } } },
+    {
+      $group: {
+        _id: "$project",
+        totalTasks: { $sum: 1 },
+        completedTasks: {
+          $sum: {
+            $cond: [{ $eq: ["$status", "completed"] }, 1, 0],
+          },
+        },
+      },
+    },
+  ]);
+  return new Map(stats.map((s) => [String(s._id), s]));
+};
+
+const enrichProjectsWithTaskStats = async (projects, { includeDetails = false } = {}) => {
+  if (!projects.length) return projects;
+
+  const map = await taskStatsByProjectIds(projects.map((p) => p._id));
+
+  return projects.map((p) => {
+    const s = map.get(String(p._id)) || { totalTasks: 0, completedTasks: 0 };
+    const total = s.totalTasks;
+    const completed = s.completedTasks;
+    const progressPercentage =
+      total === 0 ? 0 : Math.round((completed / total) * 100);
+    const owner = p.owner
+      ? {
+          name: p.owner.name,
+          email: p.owner.email,
+          avatar: p.owner.avatar,
+        }
+      : null;
+
+    const row = {
+      _id: p._id,
+      title: p.title,
+      status: p.status,
+      owner,
+      totalTasks: total,
+      completedTasks: completed,
+      progressPercentage,
+    };
+
+    if (includeDetails) {
+      return {
+        ...row,
+        description: p.description,
+        createdAt: p.createdAt,
+      };
+    }
+
+    return row;
+  });
+};
+
+const attachTaskProgress = (projects) =>
+  enrichProjectsWithTaskStats(projects, { includeDetails: false });
 
 export const createProjectService = async (ownerId, projectData) => {
   const project = await Project.create({
@@ -18,203 +83,77 @@ export const createProjectService = async (ownerId, projectData) => {
   return project;
 };
 
-export const getAllProjectsService = async (userId) => {
-  const projects = await Project.aggregate([
+export const getAllProjectsService = async (userId, query = {}) => {
+  const accessFilter = {
+    $or: [
+      { owner: userId },
+      { "members.user": userId },
+    ],
+  };
 
-    {
-      $match: {
-        $or: [
-          { owner: new mongoose.Types.ObjectId(userId) },
-          { "members.user": new mongoose.Types.ObjectId(userId) }
-        ]
-      }
-    },
+  const feature = new Features(
+    Project.find(accessFilter).select("title status owner"),
+    query,
+  )
+    .filter()
+    .sort()
+    .limitFields()
+    .search("project");
 
-    {
-      $lookup: {
-        from: "users",
-        localField: "owner",
-        foreignField: "_id",
-        as: "owner"
-      }
-    },
+  const documentsCount = await Project.countDocuments(
+    feature.mongooseQuery.getFilter(),
+  );
+  feature.pagination(documentsCount);
 
-    {
-      $unwind: "$owner"
-    },
+  const raw = await feature.mongooseQuery
+    .populate("owner", "name email avatar")
+    .lean();
 
-    {
-      $lookup: {
-        from: "tasks",
-        localField: "_id",
-        foreignField: "project",
-        as: "tasks"
-      }
-    },
+  const projects = await attachTaskProgress(raw);
 
-    {
-      $addFields: {
-        totalTasks: { $size: "$tasks" },
-
-        completedTasks: {
-          $size: {
-            $filter: {
-              input: "$tasks",
-              as: "task",
-              cond: { $eq: ["$$task.status", "completed"] }
-            }
-          }
-        }
-      }
-    },
-
-
-    {
-      $addFields: {
-        progressPercentage: {
-          $cond: [
-            { $eq: ["$totalTasks", 0] },
-            0,
-            {
-              $round: [
-                {
-                  $multiply: [
-                    { $divide: ["$completedTasks", "$totalTasks"] },
-                    100
-                  ]
-                },
-                0   
-              ]
-            }
-          ]
-        }
-      }
-    },
-
-    {
-      $project: {
-        _id: 1,
-        title: 1,
-        status: 1,
-
-        owner: {
-          name: "$owner.name",
-          email: "$owner.email",
-          avatar: "$owner.avatar"
-        },
-
-        totalTasks: 1,
-        completedTasks: 1,
-        progressPercentage: 1
-      }
-    }
-  ]);
-  return projects;
+  return {
+    projects,
+    length: documentsCount,
+    metadata: feature.paginationResult,
+  };
 };
 
 export const getMyProjectsService = async (userId, query = {}) => {
-  const { page, limit } = query;
-  const pagination = getPagination(page, limit);
-
-  const matchStage = {
-    $match: {
-      $or: [
-        { owner: new mongoose.Types.ObjectId(userId) },
-        { "members.user": new mongoose.Types.ObjectId(userId) },
-      ],
-    },
+  const accessFilter = {
+    $or: [
+      { owner: userId },
+      { "members.user": userId },
+    ],
   };
 
-  const lookupTasksStage = {
-    $lookup: {
-      from: "tasks",
-      localField: "_id",
-      foreignField: "project",
-      as: "tasks",
-    },
-  };
+  const feature = new Features(
+    Project.find(accessFilter).select(
+      "title description status owner createdAt",
+    ),
+    query,
+  )
+    .filter()
+    .sort()
+    .limitFields()
+    .search("project");
 
-  const lookupOwnerStage = {
-    $lookup: {
-      from: "users",
-      localField: "owner",
-      foreignField: "_id",
-      as: "owner",
-    },
-  };
+  const documentsCount = await Project.countDocuments(
+    feature.mongooseQuery.getFilter(),
+  );
+  feature.pagination(documentsCount);
 
-  const unwindOwnerStage = {
-    $unwind: "$owner",
-  };
+  const raw = await feature.mongooseQuery
+    .populate("owner", "name email avatar")
+    .lean();
 
-  const addFieldsStage = {
-    $addFields: {
-      totalTasks: { $size: "$tasks" },
-      completedTasks: {
-        $size: {
-          $filter: {
-            input: "$tasks",
-            as: "task",
-            cond: { $eq: ["$$task.status", "done"] },
-          },
-        },
-      },
-    },
-  };
-
-  const progressStage = {
-    $addFields: {
-      progressPercentage: {
-        $cond: {
-          if: { $gt: ["$totalTasks", 0] },
-          then: {
-            $multiply: [{ $divide: ["$completedTasks", "$totalTasks"] }, 100],
-          },
-          else: 0,
-        },
-      },
-    },
-  };
-
-  const projectStage = {
-    $project: {
-      title: 1,
-      description: 1,
-      status: 1,
-      "owner.name": 1,
-      "owner.email": 1,
-      "owner.avatar": 1,
-      totalTasks: 1,
-      completedTasks: 1,
-      progressPercentage: 1,
-      createdAt: 1,
-    },
-  };
-
-  const pipeline = [
-    matchStage,
-    lookupTasksStage,
-    lookupOwnerStage,
-    unwindOwnerStage,
-    addFieldsStage,
-    progressStage,
-    projectStage,
-    {
-      $facet: {
-        metadata: [{ $count: "total" }],
-        data: [{ $skip: pagination.skip }, { $limit: pagination.limit }],
-      },
-    },
-  ];
-
-  const result = await Project.aggregate(pipeline);
-
-  const total = result[0].metadata[0] ? result[0].metadata[0].total : 0;
-  const metadata = getPaginationMetadata(total, pagination.page, pagination.limit);
+  const projects = await enrichProjectsWithTaskStats(raw, {
+    includeDetails: true,
+  });
 
   return {
-    projects: result[0].data,
-    ...metadata,
+    projects,
+    length: documentsCount,
+    metadata: feature.paginationResult,
   };
 };
 
@@ -321,6 +260,14 @@ export const addMemberService = async (userId, projectId, memberData) => {
   const updatedProject = await Project.findById(projectId)
     .populate("owner", "name email avatar")
     .populate("members.user", "name email avatar");
+
+  await dispatchNotification({
+    recipientId: userToAdd._id,
+    type: NOTIFICATION_TYPE.PROJECT_MEMBER_ADDED,
+    title: "Added to project",
+    body: `You were added to project "${updatedProject.title}".`,
+    projectId: updatedProject._id,
+  });
 
   return updatedProject;
 };
