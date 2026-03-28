@@ -44,7 +44,17 @@ export const getContactService = async (query) => {
   } else {
     totalPages = feature.paginationResult.totalPages;
   }
-  return {contacts, length: contactCount, totalPages, metadata: feature.paginationResult};
+  return {
+    contacts,
+    length: contactCount,
+    totalPages,
+    metadata: feature.paginationResult,
+  };
+};
+
+export const getUnreadContactService = async () => {
+  const contacts = await Contact.find({ read: false });
+  return { length: contacts.length };
 };
 
 export const getContactByIdService = async (id) => {

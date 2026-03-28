@@ -4,6 +4,7 @@ import {
   createProjectService,
   deleteProjectService,
   getAllProjectsService,
+  getCompletedProjectService,
   getMyProjectsService,
   getProjectByIdService,
   removeMemberService,
@@ -38,6 +39,14 @@ export const getAllProjects = expressAsyncHandler(async (req, res) => {
   res
     .status(200)
     .json(successResponse(data, "Projects retrieved successfully"));
+});
+
+// @desc     Get completed projects
+// @route    GET /projects/complete
+// @access   Private
+export const getCompletedProjects = expressAsyncHandler(async (req, res) => {
+  const data = await getCompletedProjectService();
+  res.status(200).json(data, "Successfully");
 });
 
 // @desc     Get project by id

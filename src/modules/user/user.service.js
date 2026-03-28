@@ -23,7 +23,17 @@ export const getAllUsersService = async (query) => {
   } else {
     totalPages = feature.paginationResult.totalPages;
   }
-  return {users, length: userCount, totalPages, metadata: feature.paginationResult};
+  return {
+    users,
+    length: userCount,
+    totalPages,
+    metadata: feature.paginationResult,
+  };
+};
+
+export const getActiveUsersLengthService = async () => {
+  const users = await User.find({ active: true });
+  return { length: users.length };
 };
 
 export const getUserService = async (id) => {
@@ -36,13 +46,13 @@ export const getUserService = async (id) => {
   return user;
 };
 
-export const updateUserService= async (id, userData) => {
+export const updateUserService = async (id, userData) => {
   const user = await User.findByIdAndUpdate(id, userData, {
     new: true,
   });
 
-  if(!user){
-      throw createNotFoundError("user Not found");
+  if (!user) {
+    throw createNotFoundError("user Not found");
   }
 
   return user;
@@ -50,7 +60,7 @@ export const updateUserService= async (id, userData) => {
 
 export const deleteUserService = async (id) => {
   const user = await User.findByIdAndDelete(id);
-  if(!user){
+  if (!user) {
     throw createNotFoundError("user Not found");
   }
   return user;
