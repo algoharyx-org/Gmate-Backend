@@ -5,6 +5,7 @@ import {
   deleteContactService,
   getContactByIdService,
   getContactService,
+  getUnreadContactService,
   markAllContactsReadService,
   markContactReadService,
 } from "./contact.service.js";
@@ -17,6 +18,11 @@ export const contact = expressAsyncHandler(async (req, res) => {
 export const getContact = expressAsyncHandler(async (req, res) => {
   const contacts = await getContactService(req.query);
   res.status(200).json(successResponse(contacts, "Successfully"));
+});
+
+export const getUnreadContact = expressAsyncHandler(async (req, res) => {
+  const data = await getUnreadContactService();
+  res.status(200).json(successResponse(data, "successfully"));
 });
 
 export const getContactById = expressAsyncHandler(async (req, res) => {

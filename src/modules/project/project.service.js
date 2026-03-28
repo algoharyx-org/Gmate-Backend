@@ -118,6 +118,11 @@ export const getAllProjectsService = async (userId, query = {}) => {
   };
 };
 
+export const getCompletedProjectService = async () => {
+  const projects = await Project.find({ status: "completed" });
+  return { length: projects.length };
+}
+
 export const getMyProjectsService = async (userId, query = {}) => {
   const accessFilter = {
     $or: [

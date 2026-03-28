@@ -4,6 +4,7 @@ import {
   createProject,
   deleteProject,
   getAllProjects,
+  getCompletedProjects,
   getMyProjects,
   getProjectById,
   removeMember,
@@ -37,6 +38,7 @@ projectRouter.get(
   getMyProjects,
 );
 projectRouter.get("/", getAllProjects);
+projectRouter.get('/complete', getCompletedProjects);
 projectRouter.get("/:id", getProjectById);
 projectRouter.put(
   "/:id",
