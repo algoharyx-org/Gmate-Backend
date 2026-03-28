@@ -36,9 +36,11 @@ class Features {
     if (this.queryString.search) {
       let query = {};
       if (modelName === "user") {
-        query = { name: new RegExp(this.queryString.search, "i") };
+        query = { $or: [{ name: new RegExp(this.queryString.search, "i") }, { email: new RegExp(this.queryString.search, "i") }] };
+      } else if (modelName === "contact") {
+        query = { $or: [{ name: new RegExp(this.queryString.search, "i") }, { email: new RegExp(this.queryString.search, "i") }, { message: new RegExp(this.queryString.search, "i") }] };
       } else {
-        query = { title: new RegExp(this.queryString.search, "i") };
+        query = { $or: [{ title: new RegExp(this.queryString.search, "i") }, { description: new RegExp(this.queryString.search, "i") }] };
       }
       this.mongooseQuery = this.mongooseQuery.find(query);
     }

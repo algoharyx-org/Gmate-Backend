@@ -36,7 +36,4 @@ export const deleteCommentValidation = Joi.object({
   params: Joi.object({
     commentId: objectIdRule.required(),
   }).required(),
-  body: Joi.object({
-    userId: objectIdRule.optional(),
-  }).required(),
 });
