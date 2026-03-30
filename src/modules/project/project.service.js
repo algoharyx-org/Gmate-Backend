@@ -53,9 +53,12 @@ const enrichProjectsWithTaskStats = async (projects, { includeDetails = false } 
       title: p.title,
       status: p.status,
       owner,
+      members: p.members,
       totalTasks: total,
       completedTasks: completed,
       progressPercentage,
+      startDate: p.startDate,
+      endDate: p.endDate
     };
 
     if (includeDetails) {
@@ -84,15 +87,8 @@ export const createProjectService = async (ownerId, projectData) => {
 };
 
 export const getAllProjectsService = async (userId, query = {}) => {
-  const accessFilter = {
-    $or: [
-      { owner: userId },
-      { "members.user": userId },
-    ],
-  };
-
   const feature = new Features(
-    Project.find(accessFilter).select("title status owner"),
+    Project.find(),
     query,
   )
     .filter()
@@ -132,9 +128,7 @@ export const getMyProjectsService = async (userId, query = {}) => {
   };
 
   const feature = new Features(
-    Project.find(accessFilter).select(
-      "title description status owner createdAt",
-    ),
+    Project.find(accessFilter),
     query,
   )
     .filter()
@@ -143,12 +137,13 @@ export const getMyProjectsService = async (userId, query = {}) => {
     .search("project");
 
   const documentsCount = await Project.countDocuments(
-    feature.mongooseQuery.getFilter(),
+    feature.mongooseQuery.getFilter(), accessFilter
   );
   feature.pagination(documentsCount);
 
   const raw = await feature.mongooseQuery
     .populate("owner", "name email avatar")
+    .populate("members.user", "name email avatar")
     .lean();
 
   const projects = await enrichProjectsWithTaskStats(raw, {

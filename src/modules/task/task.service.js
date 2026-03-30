@@ -111,7 +111,14 @@ export const getAllTasksService = async (userId, query = {}) => {
   const tasks = await feature.mongooseQuery
     .populate("project", "title status")
     .populate("assignee", "name email avatar")
-    .populate("createdBy", "name email avatar");
+    .populate("createdBy", "name email avatar")
+    .populate({
+      path: "comments",
+      populate: {
+        path: "createdBy",
+        select: "name email avatar",
+      },
+    });
 
   return {
     tasks,
@@ -139,12 +146,7 @@ export const getMyTasksService = async (userId, query = {}) => {
     };
   }
 
-  const feature = new Features(
-    Task.find(accessFilter).select(
-      "title description status priority project assignee createdBy createdAt",
-    ),
-    queryForFeatures,
-  )
+  const feature = new Features(Task.find(accessFilter), queryForFeatures)
     .filter()
     .sort()
     .limitFields()
@@ -158,7 +160,14 @@ export const getMyTasksService = async (userId, query = {}) => {
   const tasks = await feature.mongooseQuery
     .populate("project", "title status")
     .populate("assignee", "name email avatar")
-    .populate("createdBy", "name email avatar");
+    .populate("createdBy", "name email avatar")
+    .populate({
+      path: "comments",
+      populate: {
+        path: "createdBy",
+        select: "name email avatar",
+      },
+    });
 
   return {
     tasks,
@@ -169,7 +178,13 @@ export const getMyTasksService = async (userId, query = {}) => {
 
 export const getTaskByIdService = async (userId, taskId) => {
   const task = await Task.findById(taskId)
-    .populate("comments")
+    .populate({
+      path: "comments",
+      populate: {
+        path: "createdBy",
+        select: "name email avatar",
+      },
+    })
     .populate("project", "title status owner members")
     .populate("assignee", "name email avatar")
     .populate("createdBy", "name email avatar");

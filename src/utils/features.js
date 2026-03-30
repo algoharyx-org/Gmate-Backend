@@ -36,13 +36,29 @@ class Features {
     if (this.queryString.search) {
       let query = {};
       if (modelName === "user") {
-        query = { $or: [{ name: new RegExp(this.queryString.search, "i") }, { email: new RegExp(this.queryString.search, "i") }] };
+        query = {
+          $or: [
+            { name: new RegExp(this.queryString.search, "i") },
+            { email: new RegExp(this.queryString.search, "i") },
+          ],
+        };
       } else if (modelName === "contact") {
-        query = { $or: [{ name: new RegExp(this.queryString.search, "i") }, { email: new RegExp(this.queryString.search, "i") }, { message: new RegExp(this.queryString.search, "i") }] };
+        query = {
+          $or: [
+            { name: new RegExp(this.queryString.search, "i") },
+            { email: new RegExp(this.queryString.search, "i") },
+            { message: new RegExp(this.queryString.search, "i") },
+          ],
+        };
       } else {
-        query = { $or: [{ title: new RegExp(this.queryString.search, "i") }, { description: new RegExp(this.queryString.search, "i") }] };
+        query = {
+          $or: [
+            { title: new RegExp(this.queryString.search, "i") },
+            { description: new RegExp(this.queryString.search, "i") },
+          ],
+        };
       }
-      this.mongooseQuery = this.mongooseQuery.find(query);
+      this.mongooseQuery = this.mongooseQuery.and([query]);
     }
     return this;
   }
@@ -53,7 +69,8 @@ class Features {
     if (limit < 1) limit = 50;
     if (limit > 100) limit = 100;
     if (limit > documentsCount && documentsCount <= 100) limit = documentsCount;
-    if ((page - 1) * limit >= documentsCount) page = Math.ceil(documentsCount / limit);
+    if ((page - 1) * limit >= documentsCount)
+      page = Math.ceil(documentsCount / limit);
     const skip = (page - 1) * limit;
     const endIndex = page * limit;
     const pagination = {};

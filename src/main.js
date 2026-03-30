@@ -15,6 +15,9 @@ function bootstrap(app) {
   app.use(apiLimiter);
   app.use(cookieParser());
 
+  app.get("/", (req, res) => {
+    res.status(200).json({ message: "Welcome to GMATE Task Management API" });
+  });
   app.use("/auth", authRouter);
   app.use("/users", userRouter);
   app.use("/projects", projectRouter);
